@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { useToast } from '../../components/ui/use-toast';
-import { Plus, Warehouse, Edit2 } from 'lucide-react';
+import { Plus, Warehouse, Edit2, Trash2 } from 'lucide-react';
 
 interface WarehouseItem {
   id: string;
@@ -64,6 +64,23 @@ export function WarehouseListPage() {
         variant: 'destructive',
         title: 'Lỗi',
         description: err.response?.data?.error?.message || 'Không thể lưu kho hàng',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/warehouses/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['warehouses'] });
+      toast({ title: 'Thành công', description: 'Đã xóa kho hàng' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa kho hàng',
       });
     },
   });
@@ -119,9 +136,24 @@ export function WarehouseListPage() {
                       <p className="text-xs text-muted-foreground">{wh.address || 'Chưa cập nhật địa chỉ'}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(wh)}>
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center space-x-1">
+                    <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(wh)}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        if (confirm(`Xác nhận xóa kho "${wh.name}"?`)) {
+                          deleteMutation.mutate(wh.id);
+                        }
+                      }}
+                      title="Xóa kho hàng"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {wh.description && (

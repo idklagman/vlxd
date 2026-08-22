@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { useToast } from '../../components/ui/use-toast';
-import { Plus, Search, Layers, ChevronDown, ChevronRight, PackagePlus } from 'lucide-react';
+import { Plus, Search, Layers, ChevronDown, ChevronRight, PackagePlus, Trash2, Edit2 } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -158,6 +158,40 @@ export function ProductListPage() {
     },
   });
 
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/products/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({ title: 'Thành công', description: 'Đã xóa sản phẩm' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa sản phẩm',
+      });
+    },
+  });
+
+  const deleteVariantMutation = useMutation({
+    mutationFn: async (variantId: string) => {
+      return apiClient.delete(`/products/variants/${variantId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({ title: 'Thành công', description: 'Đã xóa quy cách / biến thể' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa quy cách',
+      });
+    },
+  });
+
   const toggleExpand = (productId: string) => {
     setExpandedProducts((prev) => ({
       ...prev,
@@ -242,17 +276,33 @@ export function ProductListPage() {
                           )}
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenAddVariant(p.id);
-                        }}
-                      >
-                        <PackagePlus className="w-4 h-4 mr-1.5" />
-                        Thêm quy cách
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenAddVariant(p.id);
+                          }}
+                        >
+                          <PackagePlus className="w-4 h-4 mr-1.5" />
+                          Thêm quy cách
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Xác nhận xóa sản phẩm "${p.name}" cùng tất cả quy cách của nó?`)) {
+                              deleteProductMutation.mutate(p.id);
+                            }
+                          }}
+                          title="Xóa sản phẩm"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
 
                     {isExpanded && (
@@ -272,6 +322,7 @@ export function ProductListPage() {
                                   <th className="py-2 px-3">Đơn vị cơ sở</th>
                                   <th className="py-2 px-3">Thông số kỹ thuật</th>
                                   <th className="py-2 px-3">Tồn tối thiểu</th>
+                                  <th className="py-2 px-3 text-right">Xóa</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border/60">
@@ -298,6 +349,21 @@ export function ProductListPage() {
                                     </td>
                                     <td className="py-2.5 px-3">
                                       {v.minimumStock ? `${v.minimumStock} ${v.baseUnit?.code}` : '—'}
+                                    </td>
+                                    <td className="py-2.5 px-3 text-right">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => {
+                                          if (confirm(`Xác nhận xóa quy cách "${v.name}"?`)) {
+                                            deleteVariantMutation.mutate(v.id);
+                                          }
+                                        }}
+                                        title="Xóa quy cách"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
                                     </td>
                                   </tr>
                                 ))}

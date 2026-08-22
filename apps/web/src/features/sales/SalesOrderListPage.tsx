@@ -17,6 +17,7 @@ import {
   XCircle,
   Eye,
   FileText,
+  Trash2,
 } from 'lucide-react';
 
 interface SalesOrderItem {
@@ -143,6 +144,18 @@ export function SalesOrderListPage() {
     },
     onError: (err: any) => {
       toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
+    },
+  });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (id: string) => apiClient.delete(`/sales/orders/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-balances'] });
+      toast({ title: 'Đã xóa đơn hàng', description: 'Đã xóa vĩnh viễn đơn hàng khỏi hệ thống.' });
+    },
+    onError: (err: any) => {
+      toast({ variant: 'destructive', title: 'Lỗi khi xóa', description: err.response?.data?.error?.message });
     },
   });
 
@@ -353,10 +366,26 @@ export function SalesOrderListPage() {
                               }
                             }}
                             disabled={cancelMutation.isPending}
+                            title="Hủy đơn hàng"
                           >
                             <XCircle className="w-3.5 h-3.5" />
                           </Button>
                         )}
+
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                          onClick={() => {
+                            if (confirm(`Xác nhận xóa vĩnh viễn đơn hàng "${o.code}"?`)) {
+                              deleteOrderMutation.mutate(o.id);
+                            }
+                          }}
+                          disabled={deleteOrderMutation.isPending}
+                          title="Xóa đơn hàng"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}

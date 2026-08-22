@@ -24,6 +24,7 @@ import {
   Banknote,
   DollarSign,
   TrendingDown,
+  Trash2,
 } from 'lucide-react';
 
 interface ExpenseItem {
@@ -125,6 +126,23 @@ export function ExpenseListPage() {
         variant: 'destructive',
         title: 'Lỗi',
         description: err.response?.data?.error?.message || 'Không thể tạo chi phí',
+      });
+    },
+  });
+
+  const deleteExpenseMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/expenses/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast({ title: 'Thành công', description: 'Đã xóa khoản chi phí' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa chi phí',
       });
     },
   });
@@ -278,6 +296,7 @@ export function ExpenseListPage() {
                     <th className="px-4 py-3">Người nhận / Diễn giải</th>
                     <th className="px-4 py-3">Hình thức</th>
                     <th className="px-4 py-3 text-right">Số tiền chi (VND)</th>
+                    <th className="px-4 py-3 text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -318,6 +337,21 @@ export function ExpenseListPage() {
                       </td>
                       <td className="px-4 py-3 text-right font-mono font-bold text-rose-600">
                         {formatVND(exp.amount)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            if (confirm(`Xác nhận xóa khoản chi ${exp.code} (${formatVND(exp.amount)})?`)) {
+                              deleteExpenseMutation.mutate(exp.id);
+                            }
+                          }}
+                          title="Xóa khoản chi"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}

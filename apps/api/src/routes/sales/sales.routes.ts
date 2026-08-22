@@ -170,4 +170,21 @@ export async function salesRoutes(app: FastifyInstance) {
       data: lastPrice,
     };
   });
+
+  // 9. Delete sales order
+  app.delete('/orders/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const order = await db.query.salesOrders.findFirst({
+      where: eq(salesOrders.id, id),
+    });
+    if (!order) {
+      return { success: true, data: { message: 'Đơn hàng không tồn tại hoặc đã xóa' } };
+    }
+    await db.delete(salesOrderItems).where(eq(salesOrderItems.salesOrderId, id));
+    await db.delete(salesOrders).where(eq(salesOrders.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa đơn hàng thành công' },
+    };
+  });
 }

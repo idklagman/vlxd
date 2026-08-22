@@ -106,4 +106,30 @@ export async function expenseRoutes(app: FastifyInstance) {
       data: category,
     });
   });
+
+  // 7. Delete expense
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const exp = await db.query.expenses.findFirst({
+      where: eq(expenses.id, id),
+    });
+    if (!exp) {
+      return { success: true, data: { message: 'Khoản chi không tồn tại hoặc đã bị xóa' } };
+    }
+    await db.delete(expenses).where(eq(expenses.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa khoản chi thành công' },
+    };
+  });
+
+  // 8. Delete expense category
+  app.delete('/categories/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    await db.delete(expenseCategories).where(eq(expenseCategories.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa loại chi phí thành công' },
+    };
+  });
 }

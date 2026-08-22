@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { useToast } from '../../components/ui/use-toast';
-import { Edit2, ShieldAlert, Cpu } from 'lucide-react';
+import { Edit2, ShieldAlert, Cpu, Trash2 } from 'lucide-react';
 
 interface SteelSpec {
   id: string;
@@ -86,6 +86,23 @@ export function SteelSpecListPage() {
         variant: 'destructive',
         title: 'Lỗi',
         description: err.response?.data?.error?.message || 'Không thể cập nhật quy cách thép',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/steel-specs/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['steel-specs'] });
+      toast({ title: 'Thành công', description: 'Đã xóa quy cách thép' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa quy cách thép',
       });
     },
   });
@@ -197,10 +214,23 @@ export function SteelSpecListPage() {
                           Bán: {s.saleUnit?.code}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right space-x-1">
                         <Button variant="outline" size="sm" onClick={() => handleOpenEdit(s)}>
                           <Edit2 className="w-3.5 h-3.5 mr-1" />
-                          Sửa Barem
+                          Sửa
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                          onClick={() => {
+                            if (confirm(`Xác nhận xóa quy cách thép "${s.productVariant?.name}"?`)) {
+                              deleteMutation.mutate(s.id);
+                            }
+                          }}
+                          title="Xóa quy cách thép"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </td>
                     </tr>

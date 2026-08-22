@@ -137,4 +137,20 @@ export async function deliveryRoutes(app: FastifyInstance) {
       data: updated,
     };
   });
+
+  // 7. Delete trip
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const delivery = await db.query.deliveries.findFirst({
+      where: eq(deliveries.id, id),
+    });
+    if (!delivery) {
+      return { success: true, data: { message: 'Chuyến xe không tồn tại hoặc đã xóa' } };
+    }
+    await db.delete(deliveries).where(eq(deliveries.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa chuyến xe thành công' },
+    };
+  });
 }

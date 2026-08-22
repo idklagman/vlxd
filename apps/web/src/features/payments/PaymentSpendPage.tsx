@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from '../../components/ui/dialog';
 import { useToast } from '../../components/ui/use-toast';
-import { ArrowUpRight, Printer, Phone } from 'lucide-react';
+import { ArrowUpRight, Printer, Phone, Trash2 } from 'lucide-react';
 
 interface PaymentItem {
   id: string;
@@ -104,6 +104,20 @@ export function PaymentSpendPage() {
         title: 'Lỗi',
         description: err.response?.data?.error?.message || 'Không thể tạo phiếu chi',
       });
+    },
+  });
+
+  const deleteVoucherMutation = useMutation({
+    mutationFn: async (id: string) => apiClient.delete(`/payments/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments-vouchers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-debts'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-fund'] });
+      queryClient.invalidateQueries({ queryKey: ['bank-fund'] });
+      toast({ title: 'Đã xóa phiếu chi', description: 'Đã xóa phiếu chi khỏi hệ thống.' });
+    },
+    onError: (err: any) => {
+      toast({ variant: 'destructive', title: 'Lỗi khi xóa', description: err.response?.data?.error?.message });
     },
   });
 
@@ -264,7 +278,7 @@ export function PaymentSpendPage() {
                       <th className="px-4 py-3">Người nhận / NCC</th>
                       <th className="px-4 py-3">Phương thức</th>
                       <th className="px-4 py-3 text-right">Số tiền chi</th>
-                      <th className="px-4 py-3 text-right">In</th>
+                      <th className="px-4 py-3 text-right">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -284,9 +298,23 @@ export function PaymentSpendPage() {
                         <td className="px-4 py-3 text-right font-mono font-bold text-amber-800">
                           {formatVND(v.amount)}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedVoucher(v)}>
+                        <td className="px-4 py-3 text-right space-x-1">
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedVoucher(v)} title="In phiếu chi">
                             <Printer className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                            onClick={() => {
+                              if (confirm(`Xác nhận xóa phiếu chi "${v.code}"?`)) {
+                                deleteVoucherMutation.mutate(v.id);
+                              }
+                            }}
+                            disabled={deleteVoucherMutation.isPending}
+                            title="Xóa phiếu chi"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </td>
                       </tr>

@@ -217,6 +217,24 @@ export function PurchaseListPage() {
     },
   });
 
+  const deletePurchaseMutation = useMutation({
+    mutationFn: async (purchaseId: string) => {
+      return apiClient.delete(`/purchases/${purchaseId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchases'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-balances'] });
+      toast({ title: 'Đã xóa đơn nhập', description: 'Đơn nhập hàng đã được xóa khỏi hệ thống.' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi khi xóa',
+        description: err.response?.data?.error?.message || 'Không thể xóa đơn nhập',
+      });
+    },
+  });
+
   const resetForm = () => {
     setSupplierId('');
     setWarehouseId('');
@@ -368,7 +386,7 @@ export function PurchaseListPage() {
                           {PURCHASE_STATUSES[p.status]?.label || p.status}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-right space-x-2">
+                      <td className="px-4 py-3 text-right space-x-1.5 whitespace-nowrap">
                         {p.status === 'DRAFT' && (
                           <>
                             <Button
@@ -401,10 +419,24 @@ export function PurchaseListPage() {
                           </>
                         )}
                         {p.status === 'RECEIVED' && (
-                          <span className="text-xs text-muted-foreground font-mono">
+                          <span className="text-xs text-muted-foreground font-mono mr-2">
                             Đã vào sổ kho: {p.receivedAt ? formatDate(p.receivedAt) : ''}
                           </span>
                         )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                          onClick={() => {
+                            if (confirm(`Xác nhận xóa vĩnh viễn đơn nhập "${p.code}"?`)) {
+                              deletePurchaseMutation.mutate(p.id);
+                            }
+                          }}
+                          disabled={deletePurchaseMutation.isPending}
+                          title="Xóa đơn nhập"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}

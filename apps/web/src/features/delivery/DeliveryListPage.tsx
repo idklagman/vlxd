@@ -17,6 +17,7 @@ import {
   CheckCircle,
   XCircle,
   Eye,
+  Trash2,
 } from 'lucide-react';
 
 interface DeliveryItem {
@@ -122,6 +123,17 @@ export function DeliveryListPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
       toast({ title: 'Đã hủy chuyến xe', description: 'Chuyến xe đã được hủy.' });
+    },
+  });
+
+  const deleteDeliveryMutation = useMutation({
+    mutationFn: async (id: string) => apiClient.delete(`/deliveries/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+      toast({ title: 'Đã xóa chuyến xe', description: 'Chuyến xe đã được xóa vĩnh viễn.' });
+    },
+    onError: (err: any) => {
+      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
     },
   });
 
@@ -318,10 +330,26 @@ export function DeliveryListPage() {
                               }
                             }}
                             disabled={cancelMutation.isPending}
+                            title="Hủy chuyến"
                           >
                             <XCircle className="w-3.5 h-3.5" />
                           </Button>
                         )}
+
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                          onClick={() => {
+                            if (confirm(`Xác nhận xóa vĩnh viễn chuyến xe "${d.code}"?`)) {
+                              deleteDeliveryMutation.mutate(d.id);
+                            }
+                          }}
+                          disabled={deleteDeliveryMutation.isPending}
+                          title="Xóa chuyến xe"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}

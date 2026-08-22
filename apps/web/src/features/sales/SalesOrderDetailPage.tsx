@@ -20,6 +20,7 @@ import {
   Phone,
   Calendar,
   Warehouse,
+  Trash2,
 } from 'lucide-react';
 
 const ORDER_STATUSES = {
@@ -94,6 +95,19 @@ export function SalesOrderDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-balances'] });
       toast({ title: 'Đã hủy đơn hàng', description: 'Đã hoàn trả tồn kho nếu có giữ chỗ.' });
+    },
+  });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: async () => apiClient.delete(`/sales/orders/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-balances'] });
+      toast({ title: 'Đã xóa đơn hàng', description: 'Đơn hàng đã được xóa vĩnh viễn.' });
+      navigate('/don-hang');
+    },
+    onError: (err: any) => {
+      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
     },
   });
 
@@ -176,6 +190,20 @@ export function SalesOrderDetailPage() {
               Hủy đơn
             </Button>
           )}
+
+          <Button
+            variant="outline"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              if (confirm(`Xác nhận xóa vĩnh viễn đơn "${order.code}"? Hành động này không thể hoàn tác.`)) {
+                deleteOrderMutation.mutate();
+              }
+            }}
+            disabled={deleteOrderMutation.isPending}
+          >
+            <Trash2 className="w-4 h-4 mr-1.5" />
+            Xóa đơn
+          </Button>
 
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-1.5" />

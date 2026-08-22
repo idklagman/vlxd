@@ -119,6 +119,24 @@ export function UnitListPage() {
     },
   });
 
+  const deleteUnitMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/units/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['units'] });
+      queryClient.invalidateQueries({ queryKey: ['unit-conversions'] });
+      toast({ title: 'Thành công', description: 'Đã xóa đơn vị tính' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa đơn vị tính',
+      });
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -160,6 +178,19 @@ export function UnitListPage() {
                       </span>
                       <span className="text-sm font-medium">{u.name}</span>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive h-7 w-7 p-0"
+                      onClick={() => {
+                        if (confirm(`Xác nhận xóa đơn vị tính "${u.code}"?`)) {
+                          deleteUnitMutation.mutate(u.id);
+                        }
+                      }}
+                      title="Xóa đơn vị"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 ))}
               </div>

@@ -19,6 +19,7 @@ import {
   MapPin,
   Phone,
   Calendar,
+  Trash2,
 } from 'lucide-react';
 
 const DELIVERY_STATUSES = {
@@ -78,6 +79,18 @@ export function DeliveryDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['delivery', id] });
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
       toast({ title: 'Đã hủy chuyến xe', description: 'Chuyến xe đã được hủy.' });
+    },
+  });
+
+  const deleteDeliveryMutation = useMutation({
+    mutationFn: async () => apiClient.delete(`/deliveries/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+      toast({ title: 'Đã xóa chuyến xe', description: 'Chuyến xe đã được xóa vĩnh viễn.' });
+      navigate('/giao-hang');
+    },
+    onError: (err: any) => {
+      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
     },
   });
 
@@ -152,6 +165,20 @@ export function DeliveryDetailPage() {
               Hủy chuyến
             </Button>
           )}
+
+          <Button
+            variant="outline"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              if (confirm(`Xác nhận xóa vĩnh viễn chuyến xe "${delivery.code}"?`)) {
+                deleteDeliveryMutation.mutate();
+              }
+            }}
+            disabled={deleteDeliveryMutation.isPending}
+          >
+            <Trash2 className="w-4 h-4 mr-1.5" />
+            Xóa chuyến
+          </Button>
 
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="w-4 h-4 mr-1.5" />

@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { useToast } from '../../components/ui/use-toast';
-import { Plus, Building, User, Phone, MapPin, Edit2 } from 'lucide-react';
+import { Plus, Building, User, Phone, MapPin, Edit2, Trash2 } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -99,6 +99,23 @@ export function ProjectListPage() {
         variant: 'destructive',
         title: 'Lỗi',
         description: err.response?.data?.error?.message || 'Không thể lưu công trình',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/projects/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast({ title: 'Thành công', description: 'Đã xóa công trình' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa công trình',
       });
     },
   });
@@ -210,10 +227,23 @@ export function ProjectListPage() {
                     </div>
                   )}
 
-                  <div className="pt-2 border-t border-border flex justify-end">
+                  <div className="pt-2 border-t border-border flex justify-end items-center gap-1">
                     <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(p)}>
                       <Edit2 className="w-3.5 h-3.5 mr-1" />
-                      Sửa thông tin
+                      Sửa
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                      onClick={() => {
+                        if (confirm(`Xác nhận xóa công trình "${p.name}"?`)) {
+                          deleteMutation.mutate(p.id);
+                        }
+                      }}
+                      title="Xóa công trình"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>

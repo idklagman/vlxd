@@ -57,4 +57,19 @@ export async function driverRoutes(app: FastifyInstance) {
       data: updated,
     };
   });
+
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const existing = await db.query.drivers.findFirst({
+      where: eq(drivers.id, id),
+    });
+    if (!existing) {
+      return { success: true, data: { message: 'Tài xế không tồn tại hoặc đã xóa' } };
+    }
+    await db.delete(drivers).where(eq(drivers.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa tài xế thành công' },
+    };
+  });
 }

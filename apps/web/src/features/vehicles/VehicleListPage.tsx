@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { useToast } from '../../components/ui/use-toast';
-import { Plus, Truck, Edit2 } from 'lucide-react';
+import { Plus, Truck, Edit2, Trash2 } from 'lucide-react';
 
 interface Vehicle {
   id: string;
@@ -68,6 +68,23 @@ export function VehicleListPage() {
         variant: 'destructive',
         title: 'Lỗi',
         description: err.response?.data?.error?.message || 'Không thể lưu phương tiện',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/vehicles/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      toast({ title: 'Thành công', description: 'Đã xóa xe' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa xe',
       });
     },
   });
@@ -127,9 +144,24 @@ export function VehicleListPage() {
                       </Badge>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(v)}>
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center space-x-1">
+                    <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(v)}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        if (confirm(`Xác nhận xóa xe "${v.name}" (${v.plateNumber})?`)) {
+                          deleteMutation.mutate(v.id);
+                        }
+                      }}
+                      title="Xóa xe"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {v.type && (

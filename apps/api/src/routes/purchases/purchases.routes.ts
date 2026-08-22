@@ -205,4 +205,21 @@ export async function purchaseRoutes(app: FastifyInstance) {
       data: updated,
     };
   });
+
+  // Delete purchase order
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const purchase = await db.query.purchases.findFirst({
+      where: eq(purchases.id, id),
+    });
+    if (!purchase) {
+      return { success: true, data: { message: 'Đơn nhập hàng không tồn tại hoặc đã xóa' } };
+    }
+    await db.delete(purchaseItems).where(eq(purchaseItems.purchaseId, id));
+    await db.delete(purchases).where(eq(purchases.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa đơn nhập hàng thành công' },
+    };
+  });
 }

@@ -53,4 +53,19 @@ export async function vehicleRoutes(app: FastifyInstance) {
       data: updated,
     };
   });
+
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const existing = await db.query.vehicles.findFirst({
+      where: eq(vehicles.id, id),
+    });
+    if (!existing) {
+      return { success: true, data: { message: 'Xe không tồn tại hoặc đã xóa' } };
+    }
+    await db.delete(vehicles).where(eq(vehicles.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa xe thành công' },
+    };
+  });
 }

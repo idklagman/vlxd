@@ -92,4 +92,20 @@ export async function paymentRoutes(app: FastifyInstance) {
       data: voucher,
     });
   });
+
+  // 5. Delete payment
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const payment = await db.query.payments.findFirst({
+      where: eq(payments.id, id),
+    });
+    if (!payment) {
+      return { success: true, data: { message: 'Phiếu thanh toán không tồn tại hoặc đã xóa' } };
+    }
+    await db.delete(payments).where(eq(payments.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa phiếu thanh toán thành công' },
+    };
+  });
 }

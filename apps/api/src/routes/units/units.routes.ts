@@ -55,6 +55,24 @@ export async function unitRoutes(app: FastifyInstance) {
     };
   });
 
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const existing = await db.query.units.findFirst({
+      where: eq(units.id, id),
+    });
+    if (!existing) {
+      return { success: true, data: { message: 'Đơn vị không tồn tại hoặc đã xóa' } };
+    }
+    // Delete any unit conversions using this unit
+    await db.delete(unitConversions).where(eq(unitConversions.fromUnitId, id));
+    await db.delete(unitConversions).where(eq(unitConversions.toUnitId, id));
+    await db.delete(units).where(eq(units.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa đơn vị tính thành công' },
+    };
+  });
+
   // === UNIT CONVERSIONS ===
   app.get('/conversions', { preHandler: [app.authenticate] }, async (request) => {
     const query = request.query as { variantId?: string };

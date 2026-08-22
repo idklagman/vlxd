@@ -53,4 +53,19 @@ export async function warehouseRoutes(app: FastifyInstance) {
       data: updated,
     };
   });
+
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const existing = await db.query.warehouses.findFirst({
+      where: eq(warehouses.id, id),
+    });
+    if (!existing) {
+      return { success: true, data: { message: 'Kho không tồn tại hoặc đã xóa' } };
+    }
+    await db.delete(warehouses).where(eq(warehouses.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa kho hàng thành công' },
+    };
+  });
 }

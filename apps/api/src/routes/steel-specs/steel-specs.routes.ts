@@ -147,4 +147,22 @@ export async function steelSpecRoutes(app: FastifyInstance) {
       data: updated,
     };
   });
+
+  // Delete steel spec
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const existing = await db.query.steelSpecifications.findFirst({
+      where: eq(steelSpecifications.id, id),
+    });
+    if (!existing) {
+      return { success: true, data: { message: 'Quy cách thép không tồn tại hoặc đã xóa' } };
+    }
+    // Delete linked unit conversions
+    await db.delete(unitConversions).where(eq(unitConversions.productVariantId, existing.productVariantId));
+    await db.delete(steelSpecifications).where(eq(steelSpecifications.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa quy cách thép thành công' },
+    };
+  });
 }

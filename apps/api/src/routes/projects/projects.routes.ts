@@ -97,4 +97,19 @@ export async function projectRoutes(app: FastifyInstance) {
       data: updated,
     };
   });
+
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const existing = await db.query.projects.findFirst({
+      where: eq(projects.id, id),
+    });
+    if (!existing) {
+      return { success: true, data: { message: 'Công trình không tồn tại hoặc đã xóa' } };
+    }
+    await db.delete(projects).where(eq(projects.id, id));
+    return {
+      success: true,
+      data: { message: 'Đã xóa công trình thành công' },
+    };
+  });
 }

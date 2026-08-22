@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { useToast } from '../../components/ui/use-toast';
-import { Plus, UserCheck, Phone, Edit2 } from 'lucide-react';
+import { Plus, UserCheck, Phone, Edit2, Trash2 } from 'lucide-react';
 
 interface Driver {
   id: string;
@@ -64,6 +64,23 @@ export function DriverListPage() {
         variant: 'destructive',
         title: 'Lỗi',
         description: err.response?.data?.error?.message || 'Không thể lưu tài xế',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/drivers/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+      toast({ title: 'Thành công', description: 'Đã xóa tài xế' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa tài xế',
       });
     },
   });
@@ -126,9 +143,24 @@ export function DriverListPage() {
                       )}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(d)}>
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center space-x-1">
+                    <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(d)}>
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        if (confirm(`Xác nhận xóa tài xế "${d.name}"?`)) {
+                          deleteMutation.mutate(d.id);
+                        }
+                      }}
+                      title="Xóa tài xế"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {d.notes && (

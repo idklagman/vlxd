@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { useToast } from '../../components/ui/use-toast';
-import { Plus, Tags, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Tags, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 
 interface ExpenseCategory {
   id: string;
@@ -65,6 +65,23 @@ export function ExpenseCategoryListPage() {
     },
   });
 
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/expenses/categories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expense-categories'] });
+      toast({ title: 'Thành công', description: 'Đã xóa loại chi phí' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: err.response?.data?.error?.message || 'Không thể xóa loại chi phí',
+      });
+    },
+  });
+
   const resetForm = () => {
     setCode('');
     setName('');
@@ -105,6 +122,7 @@ export function ExpenseCategoryListPage() {
                     <th className="px-4 py-3">Tên loại chi phí</th>
                     <th className="px-4 py-3">Mô tả / Mục đích</th>
                     <th className="px-4 py-3">Trạng thái</th>
+                    <th className="px-4 py-3 text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -124,6 +142,21 @@ export function ExpenseCategoryListPage() {
                         >
                           {c.isActive ? 'Đang sử dụng' : 'Tạm ngưng'}
                         </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            if (confirm(`Xác nhận xóa loại chi phí "${c.name}"?`)) {
+                              deleteCategoryMutation.mutate(c.id);
+                            }
+                          }}
+                          title="Xóa loại chi phí"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}
