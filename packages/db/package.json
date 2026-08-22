@@ -1,0 +1,31 @@
+{
+  "name": "@vlxd/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/seed.ts",
+    "db:studio": "drizzle-kit studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.38.0",
+    "postgres": "^3.4.0",
+    "bcrypt": "^5.1.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@vlxd/tsconfig": "workspace:*",
+    "@types/bcrypt": "^5.0.0",
+    "drizzle-kit": "^0.30.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}

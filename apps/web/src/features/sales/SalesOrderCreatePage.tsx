@@ -1,0 +1,801 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { apiClient } from '../../lib/api-client';
+import { formatVND } from '@vlxd/shared';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { useToast } from '../../components/ui/use-toast';
+import {
+  Plus,
+  Trash2,
+  ArrowLeft,
+  ShoppingCart,
+  Building2,
+  User,
+  MapPin,
+  Phone,
+  Package,
+  Search,
+  CheckCircle2,
+  Sparkles,
+  Layers,
+  Coins
+} from 'lucide-react';
+
+export function SalesOrderCreatePage() {
+  const [customerId, setCustomerId] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [warehouseId, setWarehouseId] = useState('');
+  const [orderDate, setOrderDate] = useState(new Date().toISOString().slice(0, 10));
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryContactName, setDeliveryContactName] = useState('');
+  const [deliveryContactPhone, setDeliveryContactPhone] = useState('');
+  const [discountAmount, setDiscountAmount] = useState('0');
+  const [shippingFee, setShippingFee] = useState('0'); // Default = 0 per business rule
+  const [paidAmount, setPaidAmount] = useState('0');
+  const [tenderAmount, setTenderAmount] = useState('');
+  const [notes, setNotes] = useState('');
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('ALL');
+
+  const [items, setItems] = useState<
+    Array<{
+      productVariantId: string;
+      inputQuantity: string;
+      inputUnitId: string;
+      unitPrice: string;
+      discountAmount: string;
+    }>
+  >([
+    {
+      productVariantId: '',
+      inputQuantity: '1',
+      inputUnitId: '',
+      unitPrice: '0',
+      discountAmount: '0',
+    },
+  ]);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const res = await apiClient.get('/customers');
+      return res.data.data as any[];
+    },
+  });
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects', customerId],
+    queryFn: async () => {
+      const res = await apiClient.get('/projects', {
+        params: { customerId: customerId || undefined },
+      });
+      return res.data.data as any[];
+    },
+  });
+
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses'],
+    queryFn: async () => {
+      const res = await apiClient.get('/warehouses');
+      const data = res.data.data as { id: string; name: string }[];
+      if (data.length > 0 && !warehouseId) {
+        setWarehouseId(data[0].id);
+      }
+      return data;
+    },
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const res = await apiClient.get('/products');
+      return res.data.data as any[];
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await apiClient.get('/categories');
+      return res.data.data as any[];
+    },
+  });
+
+  const { data: units = [] } = useQuery({
+    queryKey: ['units'],
+    queryFn: async () => {
+      const res = await apiClient.get('/units');
+      return res.data.data as { id: string; code: string; name: string }[];
+    },
+  });
+
+  const { data: balances = [] } = useQuery({
+    queryKey: ['inventory-balances', warehouseId],
+    queryFn: async () => {
+      const res = await apiClient.get('/inventory/balances', {
+        params: { warehouseId: warehouseId || undefined },
+      });
+      return res.data.data as any[];
+    },
+  });
+
+  const allVariants = products.flatMap((p) =>
+    p.variants.map((v: any) => ({
+      ...v,
+      productName: p.name,
+      categoryId: p.categoryId,
+    }))
+  );
+
+  const filteredCatalogVariants = allVariants.filter((v) => {
+    const matchCat = selectedCategoryFilter === 'ALL' || v.categoryId === selectedCategoryFilter;
+    const matchSearch =
+      !catalogSearch ||
+      v.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+      v.productName.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+      (v.sku && v.sku.toLowerCase().includes(catalogSearch.toLowerCase()));
+    return matchCat && matchSearch;
+  });
+
+  const getVariantBalance = (variantId: string) => {
+    return balances.find((b) => b.productVariantId === variantId);
+  };
+
+  const handleCustomerChange = (cId: string) => {
+    setCustomerId(cId);
+    setProjectId('');
+    const cust = customers.find((c) => c.id === cId);
+    if (cust) {
+      setDeliveryAddress(cust.address || '');
+      setDeliveryContactName(cust.name);
+      setDeliveryContactPhone(cust.phone || '');
+    }
+  };
+
+  const handleProjectChange = (pId: string) => {
+    setProjectId(pId);
+    const proj = projects.find((p) => p.id === pId);
+    if (proj) {
+      if (proj.address) setDeliveryAddress(proj.address);
+      if (proj.contactName) setDeliveryContactName(proj.contactName);
+      if (proj.contactPhone) setDeliveryContactPhone(proj.contactPhone);
+    }
+  };
+
+  const handleAddItem = () => {
+    setItems((prev) => [
+      ...prev,
+      {
+        productVariantId: '',
+        inputQuantity: '1',
+        inputUnitId: '',
+        unitPrice: '0',
+        discountAmount: '0',
+      },
+    ]);
+  };
+
+  const handleAddProductFromCatalog = async (variant: any) => {
+    // If empty first item, replace it; otherwise append
+    const existingIndex = items.findIndex((it) => it.productVariantId === variant.id);
+    if (existingIndex >= 0) {
+      // Increment existing item quantity by 1
+      setItems((prev) => {
+        const updated = [...prev];
+        const currentQty = parseFloat(updated[existingIndex].inputQuantity) || 0;
+        updated[existingIndex].inputQuantity = String(currentQty + 1);
+        return updated;
+      });
+      toast({ title: 'Đã tăng số lượng', description: `${variant.name} (+1)` });
+      return;
+    }
+
+    const defaultUnitId = variant.steelSpecification?.saleUnitId || variant.baseUnitId;
+    let initialPrice = '0';
+
+    if (customerId) {
+      try {
+        const res = await apiClient.get('/sales/pricing/last-sold', {
+          params: { customerId, productVariantId: variant.id },
+        });
+        if (res.data.data?.unitPrice) {
+          initialPrice = String(res.data.data.unitPrice);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (items.length === 1 && !items[0].productVariantId) {
+      setItems([
+        {
+          productVariantId: variant.id,
+          inputQuantity: '1',
+          inputUnitId: defaultUnitId,
+          unitPrice: initialPrice,
+          discountAmount: '0',
+        },
+      ]);
+    } else {
+      setItems((prev) => [
+        ...prev,
+        {
+          productVariantId: variant.id,
+          inputQuantity: '1',
+          inputUnitId: defaultUnitId,
+          unitPrice: initialPrice,
+          discountAmount: '0',
+        },
+      ]);
+    }
+    toast({ title: 'Đã thêm vào đơn', description: variant.name });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    if (items.length > 1) {
+      setItems((prev) => prev.filter((_, idx) => idx !== index));
+    } else {
+      setItems([
+        {
+          productVariantId: '',
+          inputQuantity: '1',
+          inputUnitId: '',
+          unitPrice: '0',
+          discountAmount: '0',
+        },
+      ]);
+    }
+  };
+
+  const handleItemChange = async (index: number, field: string, value: string) => {
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+
+      if (field === 'productVariantId') {
+        const variant = allVariants.find((v) => v.id === value);
+        if (variant) {
+          updated[index].inputUnitId = variant.steelSpecification?.saleUnitId || variant.baseUnitId;
+        }
+      }
+      return updated;
+    });
+
+    if (field === 'productVariantId' && customerId && value) {
+      try {
+        const res = await apiClient.get('/sales/pricing/last-sold', {
+          params: { customerId, productVariantId: value },
+        });
+        if (res.data.data?.unitPrice) {
+          setItems((prev) => {
+            const updated = [...prev];
+            updated[index] = {
+              ...updated[index],
+              unitPrice: String(res.data.data.unitPrice),
+            };
+            return updated;
+          });
+        }
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const calculateSubtotal = () => {
+    return items.reduce((sum, it) => {
+      const qty = parseFloat(it.inputQuantity) || 0;
+      const price = parseInt(it.unitPrice, 10) || 0;
+      const disc = parseInt(it.discountAmount, 10) || 0;
+      return sum + Math.max(0, qty * price - disc);
+    }, 0);
+  };
+
+  const subtotal = calculateSubtotal();
+  const discTotal = parseInt(discountAmount, 10) || 0;
+  const shipTotal = parseInt(shippingFee, 10) || 0;
+  const grandTotal = Math.max(0, subtotal - discTotal + shipTotal);
+  const paid = parseInt(paidAmount, 10) || 0;
+  const debt = Math.max(0, grandTotal - paid);
+
+  const createOrderMutation = useMutation({
+    mutationFn: async () => {
+      return apiClient.post('/sales/orders', {
+        customerId,
+        projectId: projectId || undefined,
+        warehouseId,
+        orderDate,
+        deliveryAddress: deliveryAddress || undefined,
+        deliveryContactName: deliveryContactName || undefined,
+        deliveryContactPhone: deliveryContactPhone || undefined,
+        discountAmount: discTotal,
+        shippingFee: shipTotal,
+        paidAmount: paid,
+        notes: notes || undefined,
+        items: items
+          .filter((it) => it.productVariantId && it.inputUnitId)
+          .map((it) => ({
+            productVariantId: it.productVariantId,
+            inputQuantity: parseFloat(it.inputQuantity),
+            inputUnitId: it.inputUnitId,
+            unitPrice: parseInt(it.unitPrice, 10),
+            discountAmount: parseInt(it.discountAmount, 10) || 0,
+          })),
+      });
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      toast({ title: 'Tạo đơn thành công', description: 'Đơn bán hàng đã được tạo ở trạng thái Nháp' });
+      navigate(`/don-hang/${res.data.data.id}`);
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi tạo đơn',
+        description: err.response?.data?.error?.message || 'Không thể tạo đơn hàng',
+      });
+    },
+  });
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-4">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => navigate('/don-hang')} className="h-9 px-3">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Quay lại
+          </Button>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
+              <ShoppingCart className="w-6 h-6 text-primary" />
+              Lên Đơn Bán Hàng & POS Nhanh
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Bán buôn, bán lẻ, thợ xây & công trình — Tự động quy đổi thép (cây $\leftrightarrow$ kg), giá vốn snapshot
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main 2-Column POS Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left 7 Cols: Quick Catalog & Order Info */}
+        <div className="lg:col-span-7 space-y-5">
+          {/* Customer & Warehouse Header Card */}
+          <Card className="rounded-xl border border-border/80 shadow-sm">
+            <CardHeader className="py-3 px-4 border-b border-border/50 bg-muted/20">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <User className="w-4 h-4 text-primary" /> Khách hàng & Công trình giao
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="so-cust" className="text-xs font-bold">Khách hàng / Thợ xây *</Label>
+                  <select
+                    id="so-cust"
+                    className="w-full h-9 px-3 border border-input rounded-lg bg-background text-xs font-medium mt-1 focus:ring-1 focus:ring-primary"
+                    value={customerId}
+                    onChange={(e) => handleCustomerChange(e.target.value)}
+                  >
+                    <option value="">-- Chọn khách hàng --</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.phone ? `(${c.phone})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="so-proj" className="text-xs font-bold">Công trình xây dựng</Label>
+                  <select
+                    id="so-proj"
+                    className="w-full h-9 px-3 border border-input rounded-lg bg-background text-xs mt-1"
+                    value={projectId}
+                    onChange={(e) => handleProjectChange(e.target.value)}
+                    disabled={!customerId}
+                  >
+                    <option value="">-- Chọn công trình (nếu có) --</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="so-wh" className="text-xs font-bold">Kho xuất hàng *</Label>
+                  <select
+                    id="so-wh"
+                    className="w-full h-9 px-3 border border-input rounded-lg bg-background text-xs mt-1"
+                    value={warehouseId}
+                    onChange={(e) => setWarehouseId(e.target.value)}
+                  >
+                    {warehouses.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="so-date" className="text-xs font-bold">Ngày đặt hàng *</Label>
+                  <Input
+                    id="so-date"
+                    type="date"
+                    className="h-9 text-xs mt-1"
+                    value={orderDate}
+                    onChange={(e) => setOrderDate(e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Product Catalog Selector */}
+          <Card className="rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <CardHeader className="py-3 px-4 border-b border-border/50 bg-muted/20 flex flex-row items-center justify-between">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-500" /> Chọn nhanh mặt hàng (1-Click Add)
+              </CardTitle>
+              <div className="relative w-48">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-muted-foreground" />
+                <Input
+                  className="h-7 text-xs pl-8 pr-2"
+                  placeholder="Tìm D10, Xi măng, Cát..."
+                  value={catalogSearch}
+                  onChange={(e) => setCatalogSearch(e.target.value)}
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 space-y-3">
+              {/* Category Filter Chips */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Button
+                  size="sm"
+                  variant={selectedCategoryFilter === 'ALL' ? 'default' : 'outline'}
+                  className="h-7 text-[11px] px-2.5 rounded-full"
+                  onClick={() => setSelectedCategoryFilter('ALL')}
+                >
+                  Tất cả ({allVariants.length})
+                </Button>
+                {categories.map((cat) => (
+                  <Button
+                    key={cat.id}
+                    size="sm"
+                    variant={selectedCategoryFilter === cat.id ? 'default' : 'outline'}
+                    className="h-7 text-[11px] px-2.5 rounded-full"
+                    onClick={() => setSelectedCategoryFilter(cat.id)}
+                  >
+                    {cat.name}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Product Cards Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
+                {filteredCatalogVariants.map((v) => {
+                  const bal = getVariantBalance(v.id);
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => handleAddProductFromCatalog(v)}
+                      className="p-2.5 rounded-xl border border-border/80 bg-card hover:bg-primary/5 hover:border-primary/40 text-left transition-all flex flex-col justify-between group shadow-2xs"
+                    >
+                      <div>
+                        <span className="font-bold text-xs text-foreground group-hover:text-primary block truncate">
+                          {v.name}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground block truncate">
+                          {v.productName}
+                        </span>
+                      </div>
+                      <div className="mt-2 pt-1 border-t border-border/40 flex items-center justify-between text-[10px]">
+                        <span className="text-blue-700 font-semibold truncate">
+                          {bal?.steelCalculation ? bal.steelCalculation.formattedStock : `${bal?.availableStock || 0}`}
+                        </span>
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                          +
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Line Items Table */}
+          <Card className="rounded-xl border border-border/80 shadow-sm">
+            <CardHeader className="py-3 px-4 border-b border-border/50 flex flex-row items-center justify-between">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-primary" /> Chi tiết đơn hàng ({items.filter(it => it.productVariantId).length} mục)
+              </CardTitle>
+              <Button type="button" variant="outline" size="sm" onClick={handleAddItem} className="h-7 text-xs">
+                <Plus className="w-3.5 h-3.5 mr-1" /> Thêm dòng
+              </Button>
+            </CardHeader>
+            <CardContent className="p-3 space-y-3">
+              {items.map((item, index) => {
+                const bal = getVariantBalance(item.productVariantId);
+                const qty = parseFloat(item.inputQuantity) || 0;
+                const price = parseInt(item.unitPrice, 10) || 0;
+                const disc = parseInt(item.discountAmount, 10) || 0;
+                const lineTotal = Math.max(0, qty * price - disc);
+
+                return (
+                  <div
+                    key={index}
+                    className="bg-card p-3 rounded-xl border border-border/90 space-y-2 hover:border-primary/30 transition-colors shadow-2xs"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                      <div className="sm:col-span-5">
+                        <Label className="text-[11px] text-muted-foreground">Mặt hàng *</Label>
+                        <select
+                          className="w-full h-8 px-2 border border-input rounded bg-background text-xs font-medium mt-0.5"
+                          value={item.productVariantId}
+                          onChange={(e) => handleItemChange(index, 'productVariantId', e.target.value)}
+                        >
+                          <option value="">-- Chọn mặt hàng --</option>
+                          {allVariants.map((v: any) => (
+                            <option key={v.id} value={v.id}>
+                              {v.name} ({v.productName})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <Label className="text-[11px] text-muted-foreground">Số lượng</Label>
+                        <Input
+                          type="number"
+                          step="any"
+                          className="h-8 text-xs font-bold text-center mt-0.5"
+                          value={item.inputQuantity}
+                          onChange={(e) => handleItemChange(index, 'inputQuantity', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <Label className="text-[11px] text-muted-foreground">Đơn vị bán</Label>
+                        <select
+                          className="w-full h-8 px-2 border border-input rounded bg-background text-xs mt-0.5"
+                          value={item.inputUnitId}
+                          onChange={(e) => handleItemChange(index, 'inputUnitId', e.target.value)}
+                        >
+                          <option value="">-- Đơn vị --</option>
+                          {units.map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.code} ({u.name})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <Label className="text-[11px] text-muted-foreground">Đơn giá bán</Label>
+                        <Input
+                          type="number"
+                          className="h-8 text-xs font-mono font-bold text-primary text-right mt-0.5"
+                          value={item.unitPrice}
+                          onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="sm:col-span-1 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive mt-3"
+                          onClick={() => handleRemoveItem(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between text-xs pt-1.5 border-t border-border/50 text-muted-foreground">
+                      <div>
+                        {bal ? (
+                          <span className="text-[10px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-mono">
+                            {bal.steelCalculation
+                              ? `Tồn kho: ${bal.steelCalculation.formattedStock}`
+                              : `Tồn kho: ${bal.availableStock} ${bal.baseUnitCode}`}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] italic">Chưa chọn mặt hàng</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px]">Thành tiền:</span>
+                        <span className="font-mono font-bold text-xs text-foreground">
+                          {formatVND(lineTotal)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right 5 Cols: Invoice Total & Fast POS Cash Tender */}
+        <div className="lg:col-span-5 space-y-5">
+          <Card className="rounded-xl border border-border/80 shadow-md sticky top-20 bg-card">
+            <CardHeader className="py-3 px-5 border-b border-border/50 bg-gradient-to-r from-muted/50 to-muted/20">
+              <CardTitle className="text-sm font-bold flex items-center justify-between">
+                <span>Tổng hợp Thanh toán</span>
+                <Badge variant="outline" className="font-mono text-xs bg-primary/10 text-primary border-primary/20">
+                  {items.filter(it => it.productVariantId).length} món
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-5 space-y-4">
+              <div className="space-y-2.5 text-xs">
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>Tiền hàng:</span>
+                  <span className="font-mono font-bold text-sm text-foreground">{formatVND(subtotal)}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Chiết khấu đơn:</span>
+                  <Input
+                    type="number"
+                    className="w-32 h-8 text-right font-mono text-xs font-semibold"
+                    value={discountAmount}
+                    onChange={(e) => setDiscountAmount(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Phí vận chuyển:</span>
+                  <Input
+                    type="number"
+                    className="w-32 h-8 text-right font-mono text-xs font-semibold"
+                    value={shippingFee}
+                    onChange={(e) => setShippingFee(e.target.value)}
+                  />
+                </div>
+
+                {/* Grand Total Highlight */}
+                <div className="flex justify-between items-center pt-3 border-t border-border font-black text-base text-primary">
+                  <span>Tổng thanh toán:</span>
+                  <span className="font-mono text-lg text-primary">{formatVND(grandTotal)}</span>
+                </div>
+
+                {/* Customer Paid Input & Quick Cash Buttons */}
+                <div className="pt-2 border-t border-border space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-foreground">Khách thanh toán:</span>
+                    <Input
+                      type="number"
+                      className="w-36 h-9 text-right font-mono text-sm text-emerald-700 font-extrabold"
+                      value={paidAmount}
+                      onChange={(e) => setPaidAmount(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Fast Tender Preset Buttons */}
+                  <div className="grid grid-cols-4 gap-1.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[10px] font-mono px-1 font-bold"
+                      onClick={() => setPaidAmount(String(grandTotal))}
+                    >
+                      Trả đủ
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[10px] font-mono px-1"
+                      onClick={() => setPaidAmount(String((parseInt(paidAmount, 10) || 0) + 100000))}
+                    >
+                      +100k
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[10px] font-mono px-1"
+                      onClick={() => setPaidAmount(String((parseInt(paidAmount, 10) || 0) + 200000))}
+                    >
+                      +200k
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[10px] font-mono px-1"
+                      onClick={() => setPaidAmount(String((parseInt(paidAmount, 10) || 0) + 500000))}
+                    >
+                      +500k
+                    </Button>
+                  </div>
+
+                  {/* Tender & Change Calculation */}
+                  {parseInt(paidAmount, 10) > 0 && (
+                    <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-emerald-900 font-semibold text-[11px] flex items-center gap-1">
+                          <Coins className="w-3.5 h-3.5 text-emerald-600" /> Tiền khách đưa:
+                        </span>
+                        <Input
+                          type="number"
+                          placeholder="VD: 500000"
+                          className="w-32 h-7 text-right font-mono text-xs font-bold"
+                          value={tenderAmount}
+                          onChange={(e) => setTenderAmount(e.target.value)}
+                        />
+                      </div>
+                      {parseInt(tenderAmount, 10) >= parseInt(paidAmount, 10) && (
+                        <div className="flex justify-between items-center pt-1.5 border-t border-emerald-200 font-extrabold text-xs text-emerald-800">
+                          <span>Tiền thừa thối khách:</span>
+                          <span className="font-mono text-sm text-emerald-700">
+                            {formatVND(parseInt(tenderAmount, 10) - parseInt(paidAmount, 10))}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Debt Summary */}
+                  <div className="flex justify-between items-center pt-1 text-xs font-bold">
+                    <span className="text-rose-600">Ghi nợ đơn hàng:</span>
+                    <span className="font-mono text-rose-600 text-sm">{formatVND(debt)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="so-notes" className="text-xs font-semibold">Ghi chú giao nhận</Label>
+                <Input
+                  id="so-notes"
+                  className="h-8 text-xs mt-1"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Giao sáng sớm, gọi trước 15p..."
+                />
+              </div>
+
+              <Button
+                className="w-full h-11 text-sm font-extrabold bg-primary hover:brightness-105 shadow-md transition-all gap-2"
+                onClick={() => createOrderMutation.mutate()}
+                disabled={
+                  !customerId ||
+                  !warehouseId ||
+                  items.filter((it) => it.productVariantId).length === 0 ||
+                  createOrderMutation.isPending
+                }
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                {createOrderMutation.isPending ? 'Đang lưu đơn...' : 'Lưu Đơn Bán Hàng'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
