@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -361,6 +362,37 @@ export function SalesOrderCreatePage() {
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
+      // 1. Front-end validations with exact message
+      if (!isNewCustomer && !customerId) {
+        throw new Error('Vui lòng chọn khách hàng mua hàng (hoặc chọn + Khách mới).');
+      }
+      if (isNewCustomer && !newCustomerName.trim()) {
+        throw new Error('Vui lòng nhập họ tên khách hàng mới.');
+      }
+      if (!warehouseId) {
+        throw new Error('Vui lòng chọn kho xuất hàng.');
+      }
+
+      const validItems = items.filter((it) => it.productVariantId);
+      if (validItems.length === 0) {
+        throw new Error('Đơn hàng chưa có mặt hàng nào. Vui lòng chọn ít nhất 1 mặt hàng.');
+      }
+
+      for (let i = 0; i < validItems.length; i++) {
+        const it = validItems[i];
+        const qty = parseFloat(it.inputQuantity);
+        if (isNaN(qty) || qty <= 0) {
+          throw new Error(`Số lượng ở dòng ${i + 1} phải lớn hơn 0.`);
+        }
+        if (!it.inputUnitId) {
+          throw new Error(`Chưa chọn đơn vị tính cho mặt hàng ở dòng ${i + 1}.`);
+        }
+        const price = parseInt(it.unitPrice, 10);
+        if (isNaN(price) || price < 0) {
+          throw new Error(`Đơn giá ở dòng ${i + 1} không được âm.`);
+        }
+      }
+
       let finalCustomerId = customerId;
       if (isNewCustomer) {
         const custRes = await apiClient.post('/customers', {
@@ -385,15 +417,13 @@ export function SalesOrderCreatePage() {
         shippingFee: shipTotal,
         paidAmount: paid,
         notes: notes || undefined,
-        items: items
-          .filter((it) => it.productVariantId && it.inputUnitId)
-          .map((it) => ({
-            productVariantId: it.productVariantId,
-            inputQuantity: parseFloat(it.inputQuantity),
-            inputUnitId: it.inputUnitId,
-            unitPrice: parseInt(it.unitPrice, 10),
-            discountAmount: parseInt(it.discountAmount, 10) || 0,
-          })),
+        items: validItems.map((it) => ({
+          productVariantId: it.productVariantId,
+          inputQuantity: parseFloat(it.inputQuantity),
+          inputUnitId: it.inputUnitId,
+          unitPrice: parseInt(it.unitPrice, 10),
+          discountAmount: parseInt(it.discountAmount, 10) || 0,
+        })),
       });
     },
     onSuccess: (res) => {
@@ -404,8 +434,8 @@ export function SalesOrderCreatePage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi tạo đơn',
-        description: err.response?.data?.error?.message || 'Không thể tạo đơn hàng',
+        title: 'Lỗi tạo đơn hàng',
+        description: getErrorMessage(err, 'Không thể tạo đơn hàng. Vui lòng kiểm tra lại dữ liệu.'),
       });
     },
   });

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND, formatDateTime, formatDate } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -102,7 +103,7 @@ export function CustomerDebtPage() {
       toast({
         variant: 'destructive',
         title: 'Lỗi thu tiền',
-        description: err.response?.data?.error?.message || 'Không thể ghi nhận thu tiền',
+        description: getErrorMessage(err, 'Không thể ghi nhận thu tiền. Vui lòng kiểm tra lại.'),
       });
     },
   });

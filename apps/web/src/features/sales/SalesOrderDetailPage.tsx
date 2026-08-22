@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND, formatDate } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -57,7 +58,6 @@ export function SalesOrderDetailPage() {
     },
   });
 
-  // Action Mutations
   const confirmMutation = useMutation({
     mutationFn: async () => apiClient.post(`/sales/orders/${id}/confirm`),
     onSuccess: () => {
@@ -65,6 +65,13 @@ export function SalesOrderDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-balances'] });
       toast({ title: 'Thành công', description: 'Đã xác nhận đơn hàng và giữ chỗ tồn kho.' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xác nhận đơn',
+        description: getErrorMessage(err, 'Không thể xác nhận đơn hàng.'),
+      });
     },
   });
 
@@ -77,6 +84,13 @@ export function SalesOrderDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['inventory-transactions'] });
       toast({ title: 'Thành công', description: 'Đã xuất kho giao hàng và trừ số lượng tồn thực tế.' });
     },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xuất kho',
+        description: getErrorMessage(err, 'Không thể xuất kho giao hàng.'),
+      });
+    },
   });
 
   const completeMutation = useMutation({
@@ -85,6 +99,13 @@ export function SalesOrderDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['sales-order', id] });
       queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
       toast({ title: 'Thành công', description: 'Đơn hàng đã hoàn thành.' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi hoàn thành đơn',
+        description: getErrorMessage(err, 'Không thể hoàn thành đơn hàng.'),
+      });
     },
   });
 
@@ -95,6 +116,13 @@ export function SalesOrderDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-balances'] });
       toast({ title: 'Đã hủy đơn hàng', description: 'Đã hoàn trả tồn kho nếu có giữ chỗ.' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi hủy đơn hàng',
+        description: getErrorMessage(err, 'Không thể hủy đơn hàng.'),
+      });
     },
   });
 
@@ -107,7 +135,11 @@ export function SalesOrderDetailPage() {
       navigate('/don-hang');
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xóa đơn hàng',
+        description: getErrorMessage(err, 'Không thể xóa đơn hàng.'),
+      });
     },
   });
 

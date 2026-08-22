@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND, formatDate } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -124,8 +125,8 @@ export function ExpenseListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể tạo chi phí',
+        title: 'Lỗi tạo chi phí',
+        description: getErrorMessage(err, 'Không thể tạo khoản chi phí. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -141,8 +142,8 @@ export function ExpenseListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa chi phí',
+        title: 'Lỗi xóa chi phí',
+        description: getErrorMessage(err, 'Không thể xóa khoản chi phí.'),
       });
     },
   });

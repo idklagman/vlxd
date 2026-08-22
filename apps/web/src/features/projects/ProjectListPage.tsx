@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatDate } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -113,8 +114,8 @@ export function ProjectListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể lưu công trình',
+        title: 'Lỗi lưu công trình',
+        description: getErrorMessage(err, 'Không thể lưu thông tin công trình. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -130,8 +131,8 @@ export function ProjectListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa công trình',
+        title: 'Lỗi khi xóa',
+        description: getErrorMessage(err, 'Không thể xóa công trình.'),
       });
     },
   });
@@ -429,7 +430,7 @@ export function ProjectListPage() {
             </Button>
             <Button
               onClick={() => saveMutation.mutate()}
-              disabled={!customerId || !name.trim() || saveMutation.isPending}
+              disabled={(!isNewCustomer && !customerId) || (isNewCustomer && !newCustomerName.trim()) || !name.trim() || saveMutation.isPending}
             >
               {saveMutation.isPending ? 'Đang lưu...' : 'Lưu công trình'}
             </Button>

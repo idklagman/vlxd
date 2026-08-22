@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -66,8 +67,8 @@ export function VehicleListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể lưu phương tiện',
+        title: 'Lỗi lưu xe',
+        description: getErrorMessage(err, 'Không thể lưu thông tin xe. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -83,8 +84,8 @@ export function VehicleListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa xe',
+        title: 'Lỗi xóa xe',
+        description: getErrorMessage(err, 'Không thể xóa xe.'),
       });
     },
   });

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -127,7 +128,7 @@ export function DeliveryCreatePage() {
       toast({
         variant: 'destructive',
         title: 'Lỗi tạo chuyến xe',
-        description: err.response?.data?.error?.message || 'Không thể tạo chuyến giao hàng',
+        description: getErrorMessage(err, 'Không thể tạo chuyến giao hàng. Vui lòng kiểm tra lại thông tin.'),
       });
     },
   });

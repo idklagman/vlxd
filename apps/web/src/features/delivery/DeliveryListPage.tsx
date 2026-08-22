@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatDate } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader } from '../../components/ui/card';
@@ -102,7 +103,11 @@ export function DeliveryListPage() {
       toast({ title: 'Xuất bến thành công', description: 'Chuyến xe đã chuyển sang trạng thái đang giao hàng.' });
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xuất bến',
+        description: getErrorMessage(err, 'Không thể xuất bến chuyến xe.'),
+      });
     },
   });
 
@@ -114,7 +119,11 @@ export function DeliveryListPage() {
       toast({ title: 'Giao hàng thành công', description: 'Đã xác nhận bàn giao vật tư tại chân công trình.' });
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xác nhận giao hàng',
+        description: getErrorMessage(err, 'Không thể xác nhận giao hàng.'),
+      });
     },
   });
 
@@ -123,6 +132,13 @@ export function DeliveryListPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
       toast({ title: 'Đã hủy chuyến xe', description: 'Chuyến xe đã được hủy.' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi hủy chuyến xe',
+        description: getErrorMessage(err, 'Không thể hủy chuyến xe.'),
+      });
     },
   });
 
@@ -133,7 +149,11 @@ export function DeliveryListPage() {
       toast({ title: 'Đã xóa chuyến xe', description: 'Chuyến xe đã được xóa vĩnh viễn.' });
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi khi xóa chuyến xe',
+        description: getErrorMessage(err, 'Không thể xóa chuyến xe.'),
+      });
     },
   });
 

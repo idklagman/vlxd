@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -62,8 +63,8 @@ export function DriverListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể lưu tài xế',
+        title: 'Lỗi lưu tài xế',
+        description: getErrorMessage(err, 'Không thể lưu thông tin tài xế. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -79,8 +80,8 @@ export function DriverListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa tài xế',
+        title: 'Lỗi xóa tài xế',
+        description: getErrorMessage(err, 'Không thể xóa tài xế.'),
       });
     },
   });

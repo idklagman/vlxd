@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND, formatDate } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -173,8 +174,8 @@ export function PurchaseListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi tạo đơn',
-        description: err.response?.data?.error?.message || 'Không thể tạo đơn nhập hàng',
+        title: 'Lỗi tạo đơn nhập',
+        description: getErrorMessage(err, 'Không thể tạo đơn nhập hàng. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -195,7 +196,7 @@ export function PurchaseListPage() {
       toast({
         variant: 'destructive',
         title: 'Lỗi nhập kho',
-        description: err.response?.data?.error?.message || 'Không thể xác nhận nhập kho',
+        description: getErrorMessage(err, 'Không thể xác nhận nhập kho.'),
       });
     },
   });
@@ -211,8 +212,8 @@ export function PurchaseListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể hủy đơn',
+        title: 'Lỗi hủy đơn nhập',
+        description: getErrorMessage(err, 'Không thể hủy đơn nhập hàng.'),
       });
     },
   });
@@ -229,8 +230,8 @@ export function PurchaseListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi khi xóa',
-        description: err.response?.data?.error?.message || 'Không thể xóa đơn nhập',
+        title: 'Lỗi xóa đơn nhập',
+        description: getErrorMessage(err, 'Không thể xóa đơn nhập hàng.'),
       });
     },
   });

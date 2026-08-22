@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -88,8 +89,8 @@ export function CustomerListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể lưu khách hàng',
+        title: 'Lỗi lưu khách hàng',
+        description: getErrorMessage(err, 'Không thể lưu thông tin khách hàng. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -101,6 +102,13 @@ export function CustomerListPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast({ title: 'Thành công', description: 'Đã xóa khách hàng' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi khi xóa khách hàng',
+        description: getErrorMessage(err, 'Không thể xóa khách hàng.'),
+      });
     },
   });
 
@@ -122,8 +130,8 @@ export function CustomerListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể tạo công trình',
+        title: 'Lỗi tạo công trình',
+        description: getErrorMessage(err, 'Không thể tạo công trình. Vui lòng kiểm tra lại.'),
       });
     },
   });

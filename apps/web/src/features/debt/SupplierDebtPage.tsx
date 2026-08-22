@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND, formatDateTime } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -84,7 +85,7 @@ export function SupplierDebtPage() {
       toast({
         variant: 'destructive',
         title: 'Lỗi chi tiền',
-        description: err.response?.data?.error?.message || 'Không thể ghi nhận chi tiền',
+        description: getErrorMessage(err, 'Không thể ghi nhận chi tiền. Vui lòng kiểm tra lại.'),
       });
     },
   });

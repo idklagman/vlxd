@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -78,8 +79,8 @@ export function UnitListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể lưu đơn vị tính',
+        title: 'Lỗi lưu đơn vị',
+        description: getErrorMessage(err, 'Không thể lưu đơn vị tính. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -103,8 +104,8 @@ export function UnitListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể lưu quy đổi',
+        title: 'Lỗi lưu quy đổi',
+        description: getErrorMessage(err, 'Không thể lưu quy đổi. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -116,6 +117,13 @@ export function UnitListPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unit-conversions'] });
       toast({ title: 'Thành công', description: 'Đã xóa quy đổi đơn vị' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xóa quy đổi',
+        description: getErrorMessage(err, 'Không thể xóa quy đổi đơn vị.'),
+      });
     },
   });
 
@@ -131,8 +139,8 @@ export function UnitListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa đơn vị tính',
+        title: 'Lỗi xóa đơn vị',
+        description: getErrorMessage(err, 'Không thể xóa đơn vị tính.'),
       });
     },
   });

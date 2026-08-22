@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND, formatDate } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -101,8 +102,8 @@ export function PaymentSpendPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể tạo phiếu chi',
+        title: 'Lỗi lập phiếu chi',
+        description: getErrorMessage(err, 'Không thể tạo phiếu chi. Vui lòng kiểm tra lại thông tin.'),
       });
     },
   });
@@ -117,7 +118,11 @@ export function PaymentSpendPage() {
       toast({ title: 'Đã xóa phiếu chi', description: 'Đã xóa phiếu chi khỏi hệ thống.' });
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi khi xóa', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi khi xóa',
+        description: getErrorMessage(err, 'Không thể xóa phiếu chi.'),
+      });
     },
   });
 

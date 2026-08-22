@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -65,8 +66,8 @@ export function SupplierListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể lưu nhà cung cấp',
+        title: 'Lỗi lưu nhà cung cấp',
+        description: getErrorMessage(err, 'Không thể lưu thông tin nhà cung cấp. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -78,6 +79,13 @@ export function SupplierListPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       toast({ title: 'Thành công', description: 'Đã xóa nhà cung cấp' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi khi xóa nhà cung cấp',
+        description: getErrorMessage(err, 'Không thể xóa nhà cung cấp.'),
+      });
     },
   });
 

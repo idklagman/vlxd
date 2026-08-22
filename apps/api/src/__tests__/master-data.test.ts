@@ -132,7 +132,7 @@ describe('Master Data REST API Contract & Validation Tests', () => {
       expect(res.statusCode).toBe(400);
       const json = JSON.parse(res.payload);
       expect(json.error.code).toBe('VALIDATION_ERROR');
-      expect(json.error.message).toBe('Dữ liệu không hợp lệ');
+      expect(json.error.message).toContain('Đơn vị');
     });
 
     it('rejects customer creation with invalid Vietnamese phone number', async () => {

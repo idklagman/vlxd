@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -59,8 +60,8 @@ export function BrandListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể lưu thương hiệu',
+        title: 'Lỗi lưu thương hiệu',
+        description: getErrorMessage(err, 'Không thể lưu thương hiệu. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -76,8 +77,8 @@ export function BrandListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa thương hiệu',
+        title: 'Lỗi xóa thương hiệu',
+        description: getErrorMessage(err, 'Không thể xóa thương hiệu.'),
       });
     },
   });

@@ -67,7 +67,7 @@ describe('Error Handling and Custom Errors', () => {
     const json = JSON.parse(res.payload);
     expect(json.success).toBe(false);
     expect(json.error.code).toBe('VALIDATION_ERROR');
-    expect(json.error.message).toBe('Dữ liệu không hợp lệ');
+    expect(json.error.message).toContain('Tên đăng nhập: Không được để trống');
     expect(json.error.details.username).toBeDefined();
   });
 
@@ -133,6 +133,6 @@ describe('Error Handling and Custom Errors', () => {
     const json = JSON.parse(res.payload);
     expect(json.success).toBe(false);
     expect(json.error.code).toBe('INTERNAL_ERROR');
-    expect(json.error.message).toBe('Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.');
+    expect(json.error.message).toBe('Đã xảy ra lỗi hệ thống trên máy chủ. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.');
   });
 });

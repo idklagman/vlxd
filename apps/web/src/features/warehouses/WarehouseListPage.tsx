@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -62,8 +63,8 @@ export function WarehouseListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể lưu kho hàng',
+        title: 'Lỗi lưu kho hàng',
+        description: getErrorMessage(err, 'Không thể lưu kho hàng. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -79,8 +80,8 @@ export function WarehouseListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa kho hàng',
+        title: 'Lỗi xóa kho hàng',
+        description: getErrorMessage(err, 'Không thể xóa kho hàng.'),
       });
     },
   });

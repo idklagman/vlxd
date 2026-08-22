@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { calculateWeightPerBar, DEFAULT_BAR_LENGTH } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -84,8 +85,8 @@ export function SteelSpecListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể cập nhật quy cách thép',
+        title: 'Lỗi cập nhật quy cách thép',
+        description: getErrorMessage(err, 'Không thể cập nhật quy cách thép. Vui lòng kiểm tra lại.'),
       });
     },
   });
@@ -101,8 +102,8 @@ export function SteelSpecListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa quy cách thép',
+        title: 'Lỗi xóa quy cách thép',
+        description: getErrorMessage(err, 'Không thể xóa quy cách thép.'),
       });
     },
   });

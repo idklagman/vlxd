@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { useToast } from '../../components/ui/use-toast';
+import { getErrorMessage } from '../../lib/error-utils';
 import { vi } from '../../locales/vi';
 import { Building2 } from 'lucide-react';
 
@@ -40,10 +41,7 @@ export function LoginPage() {
       toast({
         variant: 'destructive',
         title: 'Đăng nhập thất bại',
-        description:
-          error.response?.data?.error?.message ||
-          error.response?.data?.message ||
-          'Tên đăng nhập hoặc mật khẩu không chính xác',
+        description: getErrorMessage(error, 'Tên đăng nhập hoặc mật khẩu không chính xác'),
       });
     }
   };

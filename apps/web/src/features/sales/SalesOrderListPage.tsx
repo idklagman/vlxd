@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND, formatDate } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader } from '../../components/ui/card';
@@ -110,7 +111,11 @@ export function SalesOrderListPage() {
       toast({ title: 'Đã xác nhận đơn hàng', description: 'Đã giữ chỗ số lượng trong tồn kho.' });
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xác nhận đơn',
+        description: getErrorMessage(err, 'Không thể xác nhận đơn hàng.'),
+      });
     },
   });
 
@@ -123,7 +128,11 @@ export function SalesOrderListPage() {
       toast({ title: 'Đã xuất kho giao hàng', description: 'Đã trừ tồn kho thực tế và ghi sổ cái.' });
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi xuất kho', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xuất kho',
+        description: getErrorMessage(err, 'Không thể xuất kho giao hàng.'),
+      });
     },
   });
 
@@ -132,6 +141,13 @@ export function SalesOrderListPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
       toast({ title: 'Đã hoàn thành đơn hàng', description: 'Đơn hàng đã được đánh dấu hoàn thành.' });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi hoàn thành đơn',
+        description: getErrorMessage(err, 'Không thể hoàn thành đơn hàng.'),
+      });
     },
   });
 
@@ -143,7 +159,11 @@ export function SalesOrderListPage() {
       toast({ title: 'Đã hủy đơn hàng', description: 'Đã hoàn lại số lượng giữ chỗ vào kho.' });
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi hủy đơn',
+        description: getErrorMessage(err, 'Không thể hủy đơn hàng.'),
+      });
     },
   });
 
@@ -155,7 +175,11 @@ export function SalesOrderListPage() {
       toast({ title: 'Đã xóa đơn hàng', description: 'Đã xóa vĩnh viễn đơn hàng khỏi hệ thống.' });
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi khi xóa', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xóa đơn hàng',
+        description: getErrorMessage(err, 'Không thể xóa đơn hàng.'),
+      });
     },
   });
 

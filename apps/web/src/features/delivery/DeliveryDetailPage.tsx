@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { formatVND, formatDate } from '@vlxd/shared';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -90,7 +91,11 @@ export function DeliveryDetailPage() {
       navigate('/giao-hang');
     },
     onError: (err: any) => {
-      toast({ variant: 'destructive', title: 'Lỗi', description: err.response?.data?.error?.message });
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi khi xóa chuyến xe',
+        description: getErrorMessage(err, 'Không thể xóa chuyến xe.'),
+      });
     },
   });
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -121,8 +122,8 @@ export function ProductListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể tạo sản phẩm',
+        title: 'Lỗi tạo sản phẩm',
+        description: getErrorMessage(err, 'Không thể tạo sản phẩm. Vui lòng kiểm tra lại thông tin.'),
       });
     },
   });
@@ -152,8 +153,8 @@ export function ProductListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể thêm quy cách',
+        title: 'Lỗi thêm quy cách',
+        description: getErrorMessage(err, 'Không thể thêm quy cách / biến thể.'),
       });
     },
   });
@@ -169,8 +170,8 @@ export function ProductListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa sản phẩm',
+        title: 'Lỗi xóa sản phẩm',
+        description: getErrorMessage(err, 'Không thể xóa sản phẩm.'),
       });
     },
   });
@@ -186,8 +187,8 @@ export function ProductListPage() {
     onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: err.response?.data?.error?.message || 'Không thể xóa quy cách',
+        title: 'Lỗi xóa quy cách',
+        description: getErrorMessage(err, 'Không thể xóa quy cách.'),
       });
     },
   });

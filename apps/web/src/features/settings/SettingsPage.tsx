@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { useToast } from '../../components/ui/use-toast';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -45,11 +46,11 @@ export function SettingsPage() {
         description: 'Đã lưu cài đặt cửa hàng và tài khoản ngân hàng VietinBank.',
       });
     },
-    onError: () => {
+    onError: (err: any) => {
       toast({
         variant: 'destructive',
-        title: 'Lỗi',
-        description: 'Không thể lưu cài đặt',
+        title: 'Lỗi lưu cài đặt',
+        description: getErrorMessage(err, 'Không thể lưu cài đặt cửa hàng. Vui lòng kiểm tra lại.'),
       });
     },
   });

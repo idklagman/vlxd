@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/api-client';
+import { getErrorMessage } from '../../lib/error-utils';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -102,7 +103,7 @@ export function InventoryAdjustmentPage() {
       toast({
         variant: 'destructive',
         title: 'Lỗi kiểm kê',
-        description: err.response?.data?.error?.message || 'Không thể lưu phiếu kiểm kê',
+        description: getErrorMessage(err, 'Không thể lưu phiếu kiểm kê. Vui lòng kiểm tra lại.'),
       });
     },
   });
