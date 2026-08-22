@@ -41,7 +41,11 @@ export function ProjectListPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [customerId, setCustomerId] = useState('');
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [contactName, setContactName] = useState('');
@@ -73,12 +77,24 @@ export function ProjectListPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      let finalCustomerId = customerId;
+      if (isNewCustomer && !editingProject) {
+        const custRes = await apiClient.post('/customers', {
+          name: newCustomerName.trim(),
+          phone: newCustomerPhone.trim() || undefined,
+          address: newCustomerAddress.trim() || undefined,
+          customerType: 'RETAIL',
+        });
+        finalCustomerId = custRes.data.data.id;
+        queryClient.invalidateQueries({ queryKey: ['customers'] });
+      }
+
       const payload = {
-        customerId,
+        customerId: finalCustomerId,
         name,
         address: address || undefined,
-        contactName: contactName || undefined,
-        contactPhone: contactPhone || undefined,
+        contactName: contactName || (isNewCustomer ? newCustomerName : undefined),
+        contactPhone: contactPhone || (isNewCustomer ? newCustomerPhone : undefined),
         startDate: startDate || undefined,
         status,
         notes: notes || undefined,
@@ -122,7 +138,11 @@ export function ProjectListPage() {
 
   const handleOpenCreate = () => {
     setEditingProject(null);
+    setIsNewCustomer(false);
     setCustomerId('');
+    setNewCustomerName('');
+    setNewCustomerPhone('');
+    setNewCustomerAddress('');
     setName('');
     setAddress('');
     setContactName('');
@@ -260,20 +280,76 @@ export function ProjectListPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <Label htmlFor="proj-cust">Chủ đầu tư / Khách hàng *</Label>
-              <select
-                id="proj-cust"
-                className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
-                value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
-              >
-                <option value="">-- Chọn khách hàng --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="proj-cust">Chủ đầu tư / Khách hàng *</Label>
+                {!editingProject && (
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant={!isNewCustomer ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-5 text-[10px] px-2"
+                      onClick={() => setIsNewCustomer(false)}
+                    >
+                      Có sẵn
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={isNewCustomer ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-5 text-[10px] px-2 text-primary"
+                      onClick={() => setIsNewCustomer(true)}
+                    >
+                      + Khách mới
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {!isNewCustomer ? (
+                <select
+                  id="proj-cust"
+                  className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
+                  value={customerId}
+                  onChange={(e) => setCustomerId(e.target.value)}
+                >
+                  <option value="">-- Chọn khách hàng --</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="space-y-2 p-2.5 rounded-lg border border-primary/30 bg-primary/5">
+                  <Input
+                    placeholder="Tên chủ đầu tư mới *"
+                    className="h-8 text-xs bg-background"
+                    value={newCustomerName}
+                    onChange={(e) => {
+                      setNewCustomerName(e.target.value);
+                      if (!contactName) setContactName(e.target.value);
+                    }}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Số điện thoại"
+                      className="h-8 text-xs bg-background"
+                      value={newCustomerPhone}
+                      onChange={(e) => {
+                        setNewCustomerPhone(e.target.value);
+                        if (!contactPhone) setContactPhone(e.target.value);
+                      }}
+                    />
+                    <Input
+                      placeholder="Địa chỉ thường trú"
+                      className="h-8 text-xs bg-background"
+                      value={newCustomerAddress}
+                      onChange={(e) => setNewCustomerAddress(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="p-name">Tên công trình *</Label>

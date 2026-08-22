@@ -202,6 +202,8 @@ async function seed() {
   const steelItems = [
     { type: 'COIL', diameter: '6', length: null, kgPerM: '0.222', kgPerBar: null, sku: 'THEP-D6-CUON', spec: 'D6 Cuộn' },
     { type: 'COIL', diameter: '8', length: null, kgPerM: '0.395', kgPerBar: null, sku: 'THEP-D8-CUON', spec: 'D8 Cuộn' },
+    { type: 'COIL', diameter: '6', length: null, kgPerM: '0.222', kgPerBar: null, sku: 'DAI-BE-D6', spec: 'Đai sắt D6 bẻ sẵn (Dầm, Móng, Cột)' },
+    { type: 'COIL', diameter: '8', length: null, kgPerM: '0.395', kgPerBar: null, sku: 'DAI-BE-D8', spec: 'Đai sắt D8 bẻ sẵn (Dầm, Móng, Cột)' },
     { type: 'BAR', diameter: '10', length: '11.7', kgPerM: '0.617', kgPerBar: '7.2189', sku: 'THEP-D10-HP', spec: 'D10 (11.7m)' },
     { type: 'BAR', diameter: '12', length: '11.7', kgPerM: '0.888', kgPerBar: '10.3896', sku: 'THEP-D12-HP', spec: 'D12 (11.7m)' },
     { type: 'BAR', diameter: '14', length: '11.7', kgPerM: '1.210', kgPerBar: '14.1570', sku: 'THEP-D14-HP', spec: 'D14 (11.7m)' },
@@ -259,7 +261,30 @@ async function seed() {
       }
     }
   }
-  console.log('✅ Steel products & specs seeded');
+
+  // 8.1b Công bẻ đai gia công (2.000đ/kg)
+  let bendingProduct = await db.query.products.findFirst({
+    where: eq(products.code, 'GIA-CONG-DAI'),
+  });
+  if (!bendingProduct) {
+    const [created] = await db.insert(products).values({
+      code: 'GIA-CONG-DAI',
+      name: 'Gia công & Bẻ đai thép',
+      categoryId: categoryMap['Sắt thép'],
+      description: 'Dịch vụ gia công bẻ đai dầm, móng, cột từ sắt 6 và sắt 8 (Công bẻ 2.000 đ/kg)',
+    }).returning();
+    bendingProduct = created;
+
+    await db.insert(productVariants).values({
+      productId: bendingProduct.id,
+      name: 'Công bẻ đai sắt (D6 / D8)',
+      sku: 'CONG-BE-DAI',
+      specification: 'Công gia công 2.000đ/kg',
+      baseUnitId: unitMap['KG'],
+      minimumStock: '0',
+    });
+  }
+  console.log('✅ Steel products & stirrup specs seeded');
 
   // 8.2 Xi măng
   let cementProduct = await db.query.products.findFirst({

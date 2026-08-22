@@ -386,7 +386,30 @@ export function DeliveryDetailPage() {
           </table>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 pt-8 text-center text-xs">
+        <div className="flex items-center justify-between p-2.5 rounded border border-gray-200 bg-gray-50 text-xs">
+          <div className="flex items-center gap-3">
+            <img
+              src={`https://img.vietqr.io/image/vietinbank-${settings?.bankAccount || '12283456'}-compact2.png?amount=${delivery.shippingFee || ''}&addInfo=${encodeURIComponent(delivery.code)}&accountName=${encodeURIComponent(settings?.bankAccountName || 'NGUYEN VAN CHU')}`}
+              alt="VietQR VietinBank"
+              className="w-20 h-20 object-contain border bg-white rounded p-1 shrink-0"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+            <div>
+              <p className="font-bold text-primary text-[11px] uppercase">Thanh toán cước / tiền hàng qua VietQR</p>
+              <p>Ngân hàng: <strong>{settings?.bankName || 'VietinBank'}</strong> • STK: <strong className="font-mono text-primary">{settings?.bankAccount || '12283456'}</strong></p>
+              <p>Chủ TK: <strong className="uppercase">{settings?.bankAccountName || 'NGUYEN VAN CHU'}</strong></p>
+              <p className="text-[10px] text-muted-foreground italic">Nội dung: <strong>{delivery.code}</strong></p>
+            </div>
+          </div>
+          <div className="text-right font-mono">
+            <span className="text-muted-foreground block text-[11px]">Cước vận chuyển:</span>
+            <span className="font-bold text-sm text-primary">{formatVND(delivery.shippingFee)}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 pt-6 text-center text-xs">
           <div>
             <p className="font-bold">Người lập phiếu</p>
             <p className="text-[10px] text-muted-foreground italic">(Ký, họ tên)</p>

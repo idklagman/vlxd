@@ -27,7 +27,11 @@ import {
 } from 'lucide-react';
 
 export function SalesOrderCreatePage() {
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [customerId, setCustomerId] = useState('');
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
   const [projectId, setProjectId] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
   const [orderDate, setOrderDate] = useState(new Date().toISOString().slice(0, 10));
@@ -307,16 +311,76 @@ export function SalesOrderCreatePage() {
   const paid = parseInt(paidAmount, 10) || 0;
   const debt = Math.max(0, grandTotal - paid);
 
+  const handleAddBendingService = (kgAmount: number = 100) => {
+    const bendingVariant = allVariants.find(
+      (v) => v.sku === 'CONG-BE-DAI' || v.name.toLowerCase().includes('bẻ đai')
+    );
+    const kgUnit = units.find((u) => u.code === 'KG') || units[0];
+
+    if (!bendingVariant) {
+      toast({
+        variant: 'destructive',
+        title: 'Chưa có mục công bẻ đai',
+        description: 'Vui lòng kiểm tra lại danh mục Sắt thép.',
+      });
+      return;
+    }
+
+    const unitId = kgUnit?.id || bendingVariant.baseUnitId;
+
+    setItems((prev) => {
+      // If single empty item
+      if (prev.length === 1 && !prev[0].productVariantId) {
+        return [
+          {
+            productVariantId: bendingVariant.id,
+            inputQuantity: String(kgAmount),
+            inputUnitId: unitId,
+            unitPrice: '2000', // 2000d/kg
+            discountAmount: '0',
+          },
+        ];
+      }
+      return [
+        ...prev,
+        {
+          productVariantId: bendingVariant.id,
+          inputQuantity: String(kgAmount),
+          inputUnitId: unitId,
+          unitPrice: '2000',
+          discountAmount: '0',
+        },
+      ];
+    });
+
+    toast({
+      title: 'Đã thêm công bẻ đai',
+      description: `Công bẻ đai dầm/móng/cột (2.000đ/kg) - ${kgAmount} kg`,
+    });
+  };
+
   const createOrderMutation = useMutation({
     mutationFn: async () => {
+      let finalCustomerId = customerId;
+      if (isNewCustomer) {
+        const custRes = await apiClient.post('/customers', {
+          name: newCustomerName.trim(),
+          phone: newCustomerPhone.trim() || undefined,
+          address: newCustomerAddress.trim() || undefined,
+          customerType: 'RETAIL',
+        });
+        finalCustomerId = custRes.data.data.id;
+        queryClient.invalidateQueries({ queryKey: ['customers'] });
+      }
+
       return apiClient.post('/sales/orders', {
-        customerId,
+        customerId: finalCustomerId,
         projectId: projectId || undefined,
         warehouseId,
         orderDate,
-        deliveryAddress: deliveryAddress || undefined,
-        deliveryContactName: deliveryContactName || undefined,
-        deliveryContactPhone: deliveryContactPhone || undefined,
+        deliveryAddress: (isNewCustomer ? newCustomerAddress : deliveryAddress) || undefined,
+        deliveryContactName: (isNewCustomer ? newCustomerName : deliveryContactName) || undefined,
+        deliveryContactPhone: (isNewCustomer ? newCustomerPhone : deliveryContactPhone) || undefined,
         discountAmount: discTotal,
         shippingFee: shipTotal,
         paidAmount: paid,
@@ -373,50 +437,113 @@ export function SalesOrderCreatePage() {
         <div className="lg:col-span-7 space-y-5">
           {/* Customer & Warehouse Header Card */}
           <Card className="rounded-xl border border-border/80 shadow-sm">
-            <CardHeader className="py-3 px-4 border-b border-border/50 bg-muted/20">
+            <CardHeader className="py-3 px-4 border-b border-border/50 bg-muted/20 flex flex-row items-center justify-between">
               <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <User className="w-4 h-4 text-primary" /> Khách hàng & Công trình giao
               </CardTitle>
+              <div className="flex gap-1">
+                <Button
+                  type="button"
+                  variant={!isNewCustomer ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-6 text-[11px] px-2.5"
+                  onClick={() => setIsNewCustomer(false)}
+                >
+                  Khách có sẵn
+                </Button>
+                <Button
+                  type="button"
+                  variant={isNewCustomer ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-6 text-[11px] px-2.5 text-primary"
+                  onClick={() => setIsNewCustomer(true)}
+                >
+                  + Khách mới
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-4 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="so-cust" className="text-xs font-bold">Khách hàng / Thợ xây *</Label>
-                  <select
-                    id="so-cust"
-                    className="w-full h-9 px-3 border border-input rounded-lg bg-background text-xs font-medium mt-1 focus:ring-1 focus:ring-primary"
-                    value={customerId}
-                    onChange={(e) => handleCustomerChange(e.target.value)}
-                  >
-                    <option value="">-- Chọn khách hàng --</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.phone ? `(${c.phone})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {!isNewCustomer ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="so-cust" className="text-xs font-bold">Khách hàng / Thợ xây *</Label>
+                    <select
+                      id="so-cust"
+                      className="w-full h-9 px-3 border border-input rounded-lg bg-background text-xs font-medium mt-1 focus:ring-1 focus:ring-primary"
+                      value={customerId}
+                      onChange={(e) => handleCustomerChange(e.target.value)}
+                    >
+                      <option value="">-- Chọn khách hàng --</option>
+                      {customers.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.phone ? `(${c.phone})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <Label htmlFor="so-proj" className="text-xs font-bold">Công trình xây dựng</Label>
-                  <select
-                    id="so-proj"
-                    className="w-full h-9 px-3 border border-input rounded-lg bg-background text-xs mt-1"
-                    value={projectId}
-                    onChange={(e) => handleProjectChange(e.target.value)}
-                    disabled={!customerId}
-                  >
-                    <option value="">-- Chọn công trình (nếu có) --</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div>
+                    <Label htmlFor="so-proj" className="text-xs font-bold">Công trình xây dựng</Label>
+                    <select
+                      id="so-proj"
+                      className="w-full h-9 px-3 border border-input rounded-lg bg-background text-xs mt-1"
+                      value={projectId}
+                      onChange={(e) => handleProjectChange(e.target.value)}
+                      disabled={!customerId}
+                    >
+                      <option value="">-- Chọn công trình (nếu có) --</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-3 rounded-lg border border-primary/30 bg-primary/5 space-y-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-bold text-primary">Tên khách hàng mới *</Label>
+                      <Input
+                        placeholder="VD: Anh Hải (Thợ xây)"
+                        className="h-8 text-xs bg-background mt-1"
+                        value={newCustomerName}
+                        onChange={(e) => {
+                          setNewCustomerName(e.target.value);
+                          setDeliveryContactName(e.target.value);
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-bold">Số điện thoại liên hệ</Label>
+                      <Input
+                        placeholder="098..."
+                        className="h-8 text-xs bg-background mt-1"
+                        value={newCustomerPhone}
+                        onChange={(e) => {
+                          setNewCustomerPhone(e.target.value);
+                          setDeliveryContactPhone(e.target.value);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-muted-foreground font-semibold">Địa chỉ giao hàng / Công trình</Label>
+                    <Input
+                      placeholder="Thôn, Xã, Huyện..."
+                      className="h-8 text-xs bg-background mt-1"
+                      value={newCustomerAddress}
+                      onChange={(e) => {
+                        setNewCustomerAddress(e.target.value);
+                        setDeliveryAddress(e.target.value);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
                   <Label htmlFor="so-wh" className="text-xs font-bold">Kho xuất hàng *</Label>
                   <select
@@ -450,10 +577,22 @@ export function SalesOrderCreatePage() {
           {/* Quick Product Catalog Selector */}
           <Card className="rounded-xl border border-border/80 shadow-sm overflow-hidden">
             <CardHeader className="py-3 px-4 border-b border-border/50 bg-muted/20 flex flex-row items-center justify-between">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-500" /> Chọn nhanh mặt hàng (1-Click Add)
-              </CardTitle>
-              <div className="relative w-48">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-500" /> Chọn nhanh mặt hàng (1-Click Add)
+                </CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[11px] font-bold px-2 bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100"
+                  onClick={() => handleAddBendingService(100)}
+                  title="Thêm công bẻ đai dầm/móng/cột sắt 6 & 8 (2.000đ/kg)"
+                >
+                  + Công bẻ đai (2.000đ/kg)
+                </Button>
+              </div>
+              <div className="relative w-44">
                 <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-muted-foreground" />
                 <Input
                   className="h-7 text-xs pl-8 pr-2"
@@ -783,7 +922,8 @@ export function SalesOrderCreatePage() {
                 className="w-full h-11 text-sm font-extrabold bg-primary hover:brightness-105 shadow-md transition-all gap-2"
                 onClick={() => createOrderMutation.mutate()}
                 disabled={
-                  !customerId ||
+                  (!isNewCustomer && !customerId) ||
+                  (isNewCustomer && !newCustomerName.trim()) ||
                   !warehouseId ||
                   items.filter((it) => it.productVariantId).length === 0 ||
                   createOrderMutation.isPending

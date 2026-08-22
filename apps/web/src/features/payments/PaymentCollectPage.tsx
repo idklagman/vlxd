@@ -30,7 +30,11 @@ interface PaymentItem {
 }
 
 export function PaymentCollectPage() {
+  const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [customerId, setCustomerId] = useState('');
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
   const [projectId, setProjectId] = useState('');
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'BANK_TRANSFER'>('CASH');
@@ -81,13 +85,25 @@ export function PaymentCollectPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      let finalCustomerId = customerId;
+      if (isNewCustomer) {
+        const custRes = await apiClient.post('/customers', {
+          name: newCustomerName.trim(),
+          phone: newCustomerPhone.trim() || undefined,
+          address: newCustomerAddress.trim() || undefined,
+          customerType: 'RETAIL',
+        });
+        finalCustomerId = custRes.data.data.id;
+        queryClient.invalidateQueries({ queryKey: ['customers'] });
+      }
+
       return apiClient.post('/payments/receipt', {
-        customerId,
+        customerId: finalCustomerId,
         projectId: projectId || undefined,
         amount: parseInt(amount, 10),
         paymentMethod,
         paymentDate,
-        payerReceiverName: payerName || undefined,
+        payerReceiverName: payerName || (isNewCustomer ? newCustomerName : undefined),
         notes: notes || undefined,
       });
     },
@@ -124,7 +140,11 @@ export function PaymentCollectPage() {
   });
 
   const resetForm = () => {
+    setIsNewCustomer(false);
     setCustomerId('');
+    setNewCustomerName('');
+    setNewCustomerPhone('');
+    setNewCustomerAddress('');
     setProjectId('');
     setAmount('');
     setPaymentMethod('CASH');
@@ -159,21 +179,82 @@ export function PaymentCollectPage() {
             <CardDescription>Nhập thông tin người nộp và số tiền</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="rc-cust">Khách hàng nộp tiền *</Label>
-              <select
-                id="rc-cust"
-                className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
-                value={customerId}
-                onChange={(e) => handleCustomerChange(e.target.value)}
-              >
-                <option value="">-- Chọn khách hàng --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.phone ? `(${c.phone})` : ''}
-                  </option>
-                ))}
-              </select>
+            {/* Customer Mode Selection */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold">Khách hàng nộp tiền *</Label>
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant={!isNewCustomer ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-6 text-[11px] px-2"
+                    onClick={() => setIsNewCustomer(false)}
+                  >
+                    Khách có sẵn
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={isNewCustomer ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-6 text-[11px] px-2 text-primary"
+                    onClick={() => setIsNewCustomer(true)}
+                  >
+                    + Khách mới
+                  </Button>
+                </div>
+              </div>
+
+              {!isNewCustomer ? (
+                <select
+                  id="rc-cust"
+                  className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
+                  value={customerId}
+                  onChange={(e) => handleCustomerChange(e.target.value)}
+                >
+                  <option value="">-- Chọn khách hàng --</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.phone ? `(${c.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="space-y-2.5 p-3 rounded-lg border border-primary/30 bg-primary/5">
+                  <div>
+                    <Label className="text-xs font-bold text-primary">Tên khách hàng mới *</Label>
+                    <Input
+                      placeholder="VD: Anh Nam Thợ Xây"
+                      className="h-8 text-xs bg-background mt-1"
+                      value={newCustomerName}
+                      onChange={(e) => {
+                        setNewCustomerName(e.target.value);
+                        setPayerName(e.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-[11px] text-muted-foreground">Số điện thoại</Label>
+                      <Input
+                        placeholder="0912..."
+                        className="h-8 text-xs bg-background mt-1"
+                        value={newCustomerPhone}
+                        onChange={(e) => setNewCustomerPhone(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[11px] text-muted-foreground">Địa chỉ / Công trình</Label>
+                      <Input
+                        placeholder="Thôn, xã..."
+                        className="h-8 text-xs bg-background mt-1"
+                        value={newCustomerAddress}
+                        onChange={(e) => setNewCustomerAddress(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -183,7 +264,7 @@ export function PaymentCollectPage() {
                 className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
-                disabled={!customerId}
+                disabled={isNewCustomer || !customerId}
               >
                 <option value="">-- Thu chung khách hàng --</option>
                 {projects.map((p) => (
@@ -254,7 +335,7 @@ export function PaymentCollectPage() {
             <Button
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11"
               onClick={() => createMutation.mutate()}
-              disabled={!customerId || !amount || createMutation.isPending}
+              disabled={(!isNewCustomer && !customerId) || (isNewCustomer && !newCustomerName.trim()) || !amount || createMutation.isPending}
             >
               {createMutation.isPending ? 'Đang lưu...' : 'Xác nhận Thu tiền'}
             </Button>
@@ -382,7 +463,24 @@ export function PaymentCollectPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-6 text-center text-xs">
+              {/* VietinBank VietQR */}
+              <div className="flex items-center gap-3 p-2 bg-gray-50 border rounded text-[11px]">
+                <img
+                  src={`https://img.vietqr.io/image/vietinbank-${settings?.bankAccount || '12283456'}-compact2.png?amount=${selectedReceipt.amount}&addInfo=${encodeURIComponent(selectedReceipt.code)}&accountName=${encodeURIComponent(settings?.bankAccountName || 'NGUYEN VAN CHU')}`}
+                  alt="VietQR VietinBank"
+                  className="w-16 h-16 object-contain border bg-white rounded p-0.5 shrink-0"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+                <div className="space-y-0.5">
+                  <p className="font-bold text-primary uppercase text-[10px]">Tài khoản nhận tiền VietinBank</p>
+                  <p>STK: <strong className="font-mono text-primary">{settings?.bankAccount || '12283456'}</strong> ({settings?.bankAccountName || 'NGUYEN VAN CHU'})</p>
+                  <p className="text-muted-foreground italic text-[10px]">Quét mã VietQR chuyển khoản theo mã phiếu</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 text-center text-xs">
                 <div>
                   <p className="font-bold">Người nộp tiền</p>
                   <p className="text-[10px] text-muted-foreground italic">(Ký, họ tên)</p>

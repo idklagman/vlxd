@@ -471,15 +471,22 @@ export function SalesOrderDetailPage() {
 
         {/* Totals and Bank Info */}
         <div className="grid grid-cols-2 gap-4 pt-2 text-xs border-t">
-          <div className="space-y-1">
-            {settings?.bankAccount && (
-              <div className="bg-gray-50 p-2.5 rounded border border-gray-200 text-xs">
-                <p className="font-semibold text-primary">Thông tin chuyển khoản:</p>
-                <p>Ngân hàng: {settings.bankName}</p>
-                <p>Số tài khoản: <strong>{settings.bankAccount}</strong></p>
-                <p>Chủ tài khoản: {settings.bankAccountName}</p>
-              </div>
-            )}
+          <div className="flex items-start gap-3 bg-gray-50 p-2.5 rounded border border-gray-200 text-xs">
+            <img
+              src={`https://img.vietqr.io/image/vietinbank-${settings?.bankAccount || '12283456'}-compact2.png?amount=${order.debtAmount > 0 ? order.debtAmount : order.grandTotal}&addInfo=${encodeURIComponent(order.code)}&accountName=${encodeURIComponent(settings?.bankAccountName || 'NGUYEN VAN CHU')}`}
+              alt="VietQR VietinBank"
+              className="w-24 h-24 object-contain border bg-white rounded p-1 shrink-0"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+            <div className="space-y-0.5">
+              <p className="font-bold text-primary text-[11px] uppercase">Quét mã VietQR chuyển khoản</p>
+              <p>Ngân hàng: <strong>{settings?.bankName || 'VietinBank'}</strong></p>
+              <p>Số tài khoản: <strong className="font-mono text-sm text-primary">{settings?.bankAccount || '12283456'}</strong></p>
+              <p>Chủ TK: <strong className="uppercase">{settings?.bankAccountName || 'NGUYEN VAN CHU'}</strong></p>
+              <p className="text-[10px] text-muted-foreground italic">Nội dung CK: <strong>{order.code}</strong></p>
+            </div>
           </div>
 
           <div className="space-y-1 text-right">
