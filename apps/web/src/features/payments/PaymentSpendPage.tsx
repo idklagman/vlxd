@@ -138,14 +138,14 @@ export function PaymentSpendPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="print:hidden">
         <h1 className="text-2xl font-bold tracking-tight">Chi tiền & Lập Phiếu Chi</h1>
         <p className="text-muted-foreground">
           Lập phiếu chi trả tiền hàng Nhà cung cấp, chi phí vận chuyển, xăng dầu, nhân công
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
         {/* Form Create Voucher */}
         <Card className="lg:col-span-1">
           <CardHeader>

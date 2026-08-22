@@ -161,14 +161,14 @@ export function PaymentCollectPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="print:hidden">
         <h1 className="text-2xl font-bold tracking-tight">Thu tiền & Lập Phiếu Thu</h1>
         <p className="text-muted-foreground">
           Ghi nhận các khoản thu tiền hàng, thu nợ khách hàng / thợ xây bằng Tiền mặt hoặc Chuyển khoản
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
         {/* Form Create Receipt */}
         <Card className="lg:col-span-1">
           <CardHeader>
@@ -464,19 +464,21 @@ export function PaymentCollectPage() {
               </div>
 
               {/* VietinBank VietQR */}
-              <div className="flex items-center gap-3 p-2 bg-gray-50 border rounded text-[11px]">
+              <div className="flex items-center gap-4 p-3 bg-gray-50 border border-gray-300 rounded-xl text-xs">
                 <img
                   src={`https://img.vietqr.io/image/vietinbank-${settings?.bankAccount || '12283456'}-compact2.png?amount=${selectedReceipt.amount}&addInfo=${encodeURIComponent(selectedReceipt.code)}&accountName=${encodeURIComponent(settings?.bankAccountName || 'NGUYEN VAN CHU')}`}
                   alt="VietQR VietinBank"
-                  className="w-16 h-16 object-contain border bg-white rounded p-0.5 shrink-0"
+                  className="w-36 h-36 object-contain border-2 border-primary/40 bg-white rounded-lg p-1 shrink-0 shadow-xs"
                   onError={(e) => {
                     (e.target as HTMLElement).style.display = 'none';
                   }}
                 />
-                <div className="space-y-0.5">
-                  <p className="font-bold text-primary uppercase text-[10px]">Tài khoản nhận tiền VietinBank</p>
-                  <p>STK: <strong className="font-mono text-primary">{settings?.bankAccount || '12283456'}</strong> ({settings?.bankAccountName || 'NGUYEN VAN CHU'})</p>
-                  <p className="text-muted-foreground italic text-[10px]">Quét mã VietQR chuyển khoản theo mã phiếu</p>
+                <div className="space-y-1">
+                  <p className="font-extrabold text-primary uppercase text-xs">Tài khoản nhận tiền VietinBank</p>
+                  <p className="text-gray-600">Ngân hàng: <strong className="text-black">{settings?.bankName || 'VietinBank'}</strong></p>
+                  <p className="text-gray-600">STK: <strong className="font-mono text-base font-black text-primary">{settings?.bankAccount || '12283456'}</strong></p>
+                  <p className="text-gray-600">Chủ TK: <strong className="uppercase text-black">{settings?.bankAccountName || 'NGUYEN VAN CHU'}</strong></p>
+                  <p className="text-muted-foreground italic text-[11px] pt-0.5 border-t border-gray-200">Quét mã VietQR chuyển khoản theo mã phiếu</p>
                 </div>
               </div>
 

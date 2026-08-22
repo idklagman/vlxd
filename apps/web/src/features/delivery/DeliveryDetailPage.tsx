@@ -386,26 +386,27 @@ export function DeliveryDetailPage() {
           </table>
         </div>
 
-        <div className="flex items-center justify-between p-2.5 rounded border border-gray-200 bg-gray-50 text-xs">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-3.5 rounded-xl border border-gray-300 bg-gray-50 text-xs">
+          <div className="flex items-center gap-4">
             <img
               src={`https://img.vietqr.io/image/vietinbank-${settings?.bankAccount || '12283456'}-compact2.png?amount=${delivery.shippingFee || ''}&addInfo=${encodeURIComponent(delivery.code)}&accountName=${encodeURIComponent(settings?.bankAccountName || 'NGUYEN VAN CHU')}`}
               alt="VietQR VietinBank"
-              className="w-20 h-20 object-contain border bg-white rounded p-1 shrink-0"
+              className="w-36 h-36 object-contain border-2 border-primary/40 bg-white rounded-lg p-1.5 shrink-0 shadow-xs"
               onError={(e) => {
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
-            <div>
-              <p className="font-bold text-primary text-[11px] uppercase">Thanh toán cước / tiền hàng qua VietQR</p>
-              <p>Ngân hàng: <strong>{settings?.bankName || 'VietinBank'}</strong> • STK: <strong className="font-mono text-primary">{settings?.bankAccount || '12283456'}</strong></p>
-              <p>Chủ TK: <strong className="uppercase">{settings?.bankAccountName || 'NGUYEN VAN CHU'}</strong></p>
-              <p className="text-[10px] text-muted-foreground italic">Nội dung: <strong>{delivery.code}</strong></p>
+            <div className="space-y-1">
+              <p className="font-extrabold text-primary text-xs uppercase tracking-wide">Thanh toán cước / tiền hàng qua VietQR</p>
+              <p className="text-gray-600">Ngân hàng: <strong className="text-black text-xs">{settings?.bankName || 'VietinBank'}</strong></p>
+              <p className="text-gray-600">Số tài khoản: <strong className="font-mono text-base font-black text-primary">{settings?.bankAccount || '12283456'}</strong></p>
+              <p className="text-gray-600">Chủ TK: <strong className="uppercase text-black">{settings?.bankAccountName || 'NGUYEN VAN CHU'}</strong></p>
+              <p className="text-xs text-muted-foreground pt-1 border-t border-gray-200">Nội dung CK: <strong className="font-mono text-black font-bold">{delivery.code}</strong></p>
             </div>
           </div>
           <div className="text-right font-mono">
-            <span className="text-muted-foreground block text-[11px]">Cước vận chuyển:</span>
-            <span className="font-bold text-sm text-primary">{formatVND(delivery.shippingFee)}</span>
+            <span className="text-muted-foreground block text-xs">Cước vận chuyển:</span>
+            <span className="font-extrabold text-base text-primary">{formatVND(delivery.shippingFee)}</span>
           </div>
         </div>
 

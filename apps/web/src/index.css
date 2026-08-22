@@ -52,13 +52,73 @@
   }
 }
 
-/* Print Optimization */
+/* Professional Print Optimization for Slips & Invoices */
 @media print {
-  body {
-    background: white !important;
-    color: black !important;
+  @page {
+    size: A4 portrait;
+    margin: 10mm 10mm 10mm 10mm;
   }
-  .print\\:hidden {
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely eliminate all navigation, sidebar, dashboard headers, buttons, toasts */
+  nav,
+  aside,
+  header,
+  button,
+  .print\:hidden,
+  .no-print,
+  [data-radix-portal] > div:first-child:not([role="dialog"]), /* Dialog backdrop */
+  [role="dialog"] > button {
     display: none !important;
+  }
+
+  /* Reset outer containers so no scrollbars or clipped borders */
+  #root,
+  .flex,
+  .flex-1,
+  main {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Ensure dialog / modal sheets render cleanly on paper */
+  [role="dialog"] {
+    position: static !important;
+    display: block !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    transform: none !important;
+  }
+
+  .printable-sheet {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
   }
 }
