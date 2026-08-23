@@ -5,6 +5,26 @@ import { NotFoundError } from '../../utils/errors.js';
 import { createAuditLog } from '../../services/audit.service.js';
 
 export async function settingsRoutes(app: FastifyInstance) {
+  // Public endpoint for Login page and unauthenticated views
+  app.get('/public', async () => {
+    const allSettings = await db.query.systemSettings.findMany();
+    const map: Record<string, string> = {};
+    for (const s of allSettings) {
+      map[s.key] = s.value;
+    }
+    return {
+      success: true,
+      data: {
+        storeName: map['store.name'] || 'Cửa hàng VLXD Ton Thủy',
+        storePhone: map['store.phone'] || '0987593703',
+        storeAddress: map['store.address'] || 'Yên Vỹ, Tam Giang, Bắc Ninh',
+        bankName: map['bank.name'] || 'VietinBank',
+        bankAccount: map['bank.account_number'] || '12283456',
+        bankAccountName: map['bank.account_name'] || 'NGUYEN DUC LONG',
+      },
+    };
+  });
+
   app.get('/', { preHandler: [app.authenticate] }, async (request, reply) => {
     const allSettings = await db.query.systemSettings.findMany();
     const map: Record<string, string> = {};
@@ -14,12 +34,12 @@ export async function settingsRoutes(app: FastifyInstance) {
     return {
       success: true,
       data: {
-        storeName: map['store.name'] || 'Cửa hàng VLXD',
-        storePhone: map['store.phone'] || '0987654321',
-        storeAddress: map['store.address'] || 'Hương Sơn, Mỹ Đức, Hà Nội',
+        storeName: map['store.name'] || 'Cửa hàng VLXD Ton Thủy',
+        storePhone: map['store.phone'] || '0987593703',
+        storeAddress: map['store.address'] || 'Yên Vỹ, Tam Giang, Bắc Ninh',
         bankName: map['bank.name'] || 'VietinBank',
         bankAccount: map['bank.account_number'] || '12283456',
-        bankAccountName: map['bank.account_name'] || 'NGUYEN VAN CHU',
+        bankAccountName: map['bank.account_name'] || 'NGUYEN DUC LONG',
         items: allSettings,
       },
     };
