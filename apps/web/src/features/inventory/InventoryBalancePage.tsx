@@ -95,12 +95,6 @@ export function InventoryBalancePage() {
               Sổ cái biến động
             </Link>
           </Button>
-          <Button variant="outline" asChild>
-            <Link to="/ton-kho/chuyen-kho">
-              <ArrowRightLeft className="w-4 h-4 mr-2" />
-              Chuyển kho
-            </Link>
-          </Button>
           <Button asChild>
             <Link to="/ton-kho/dieu-chinh">
               <SlidersHorizontal className="w-4 h-4 mr-2" />
@@ -112,7 +106,7 @@ export function InventoryBalancePage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -122,18 +116,6 @@ export function InventoryBalancePage() {
                 className="pl-9"
               />
             </div>
-            <select
-              className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
-              value={selectedWarehouse}
-              onChange={(e) => setSelectedWarehouse(e.target.value)}
-            >
-              <option value="">Tất cả kho hàng</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
             <select
               className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
               value={selectedCategory}

@@ -111,8 +111,8 @@ export function WarehouseListPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Danh sách Kho & Bãi</h1>
-          <p className="text-muted-foreground">Quản lý các địa điểm chứa hàng (Kho Xi Sắt, Bãi Cát Sỏi Gạch...)</p>
+          <h1 className="text-2xl font-bold tracking-tight">Thông tin Kho hàng</h1>
+          <p className="text-muted-foreground">Quản lý thông tin địa điểm kho hàng tổng của cửa hàng VLXD</p>
         </div>
         <Button onClick={handleOpenCreate} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />

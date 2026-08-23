@@ -47,7 +47,6 @@ const navGroups: NavGroup[] = [
       { title: 'Sổ cái Nhập - Xuất - Tồn', href: '/ton-kho/so-cai', icon: Layers },
       { title: 'Nhập hàng từ NCC', href: '/nhap-hang', icon: ArrowDownToLine },
       { title: 'Điều chỉnh kiểm kê', href: '/ton-kho/dieu-chinh', icon: SlidersHorizontal },
-      { title: 'Chuyển kho nội bộ', href: '/ton-kho/chuyen-kho', icon: ArrowRightLeft },
     ]
   },
   {
@@ -82,7 +81,7 @@ const navGroups: NavGroup[] = [
       { title: 'Nhóm sản phẩm', href: '/danh-muc/danh-muc-san-pham', icon: Database },
       { title: 'Đơn vị tính & Quy đổi', href: '/danh-muc/don-vi', icon: Scale },
       { title: 'Thương hiệu / Hãng', href: '/danh-muc/thuong-hieu', icon: Tag },
-      { title: 'Kho bãi tập kết', href: '/danh-muc/kho', icon: Warehouse },
+      { title: 'Thông tin Kho hàng', href: '/danh-muc/kho', icon: Warehouse },
       { title: 'Nhà cung cấp', href: '/danh-muc/nha-cung-cap', icon: Building2 },
       { title: 'Đội xe tải & Xe ben', href: '/danh-muc/xe', icon: TruckIcon },
       { title: 'Danh sách Tài xế', href: '/danh-muc/tai-xe', icon: UserSquare2 },

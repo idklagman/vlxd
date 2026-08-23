@@ -575,19 +575,13 @@ export function SalesOrderCreatePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
-                  <Label htmlFor="so-wh" className="text-xs font-bold">Kho xuất hàng *</Label>
-                  <select
+                  <Label htmlFor="so-wh" className="text-xs font-bold">Kho xuất hàng</Label>
+                  <Input
                     id="so-wh"
-                    className="w-full h-9 px-3 border border-input rounded-lg bg-background text-xs mt-1"
-                    value={warehouseId}
-                    onChange={(e) => setWarehouseId(e.target.value)}
-                  >
-                    {warehouses.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name}
-                      </option>
-                    ))}
-                  </select>
+                    value={warehouses.find((w) => w.id === warehouseId)?.name || warehouses[0]?.name || 'Kho Tổng VLXD'}
+                    disabled
+                    className="h-9 text-xs mt-1 bg-muted font-medium text-foreground"
+                  />
                 </div>
 
                 <div>

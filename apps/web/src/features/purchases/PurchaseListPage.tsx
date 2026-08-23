@@ -121,7 +121,11 @@ export function PurchaseListPage() {
     queryKey: ['warehouses'],
     queryFn: async () => {
       const res = await apiClient.get('/warehouses');
-      return res.data.data as { id: string; name: string }[];
+      const data = res.data.data as { id: string; name: string }[];
+      if (data.length > 0 && !warehouseId) {
+        setWarehouseId(data[0].id);
+      }
+      return data;
     },
   });
 
@@ -152,7 +156,7 @@ export function PurchaseListPage() {
     mutationFn: async () => {
       return apiClient.post('/purchases', {
         supplierId,
-        warehouseId,
+        warehouseId: warehouseId || warehouses[0]?.id,
         purchaseDate,
         discountAmount: parseInt(discountAmount, 10) || 0,
         paidAmount: parseInt(paidAmount, 10) || 0,
@@ -238,7 +242,7 @@ export function PurchaseListPage() {
 
   const resetForm = () => {
     setSupplierId('');
-    setWarehouseId('');
+    setWarehouseId(warehouses[0]?.id || '');
     setPurchaseDate(new Date().toISOString().slice(0, 10));
     setDiscountAmount('0');
     setPaidAmount('0');
@@ -294,7 +298,12 @@ export function PurchaseListPage() {
             Tạo đơn nhập vật liệu từ Nhà cung cấp, hỗ trợ quy đổi đơn vị và tự động tính giá vốn bình quân di động
           </p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="w-full sm:w-auto">
+        <Button onClick={() => {
+          if (warehouses.length > 0 && !warehouseId) {
+            setWarehouseId(warehouses[0].id);
+          }
+          setIsDialogOpen(true);
+        }} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Tạo đơn nhập hàng
         </Button>
@@ -302,7 +311,7 @@ export function PurchaseListPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
             <select
               className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
               value={selectedSupplier}
@@ -312,18 +321,6 @@ export function PurchaseListPage() {
               {suppliers.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
-              value={selectedWarehouse}
-              onChange={(e) => setSelectedWarehouse(e.target.value)}
-            >
-              <option value="">Tất cả Kho nhận</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
                 </option>
               ))}
             </select>
@@ -475,20 +472,13 @@ export function PurchaseListPage() {
               </div>
 
               <div>
-                <Label htmlFor="pur-wh">Kho nhập hàng *</Label>
-                <select
+                <Label htmlFor="pur-wh">Kho nhập hàng</Label>
+                <Input
                   id="pur-wh"
-                  className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
-                  value={warehouseId}
-                  onChange={(e) => setWarehouseId(e.target.value)}
-                >
-                  <option value="">-- Chọn kho bãi --</option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
+                  value={warehouses.find((w) => w.id === warehouseId)?.name || warehouses[0]?.name || 'Kho Tổng VLXD'}
+                  disabled
+                  className="h-10 bg-muted font-medium text-foreground text-sm"
+                />
               </div>
 
               <div>

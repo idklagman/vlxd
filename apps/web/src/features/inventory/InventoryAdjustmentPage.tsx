@@ -36,7 +36,11 @@ export function InventoryAdjustmentPage() {
     queryKey: ['warehouses'],
     queryFn: async () => {
       const res = await apiClient.get('/warehouses');
-      return res.data.data as { id: string; name: string }[];
+      const data = res.data.data as { id: string; name: string }[];
+      if (data.length > 0 && !warehouseId) {
+        setWarehouseId(data[0].id);
+      }
+      return data;
     },
   });
 
@@ -159,25 +163,18 @@ export function InventoryAdjustmentPage() {
       <Card>
         <CardHeader>
           <CardTitle>Thông tin Phiếu kiểm kê</CardTitle>
-          <CardDescription>Chọn kho và nhập lý do điều chỉnh</CardDescription>
+          <CardDescription>Kho hàng: {warehouses[0]?.name || 'Kho Tổng VLXD'}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="adj-wh">Kho cần kiểm kê / điều chỉnh *</Label>
-              <select
+              <Label htmlFor="adj-wh">Kho hàng</Label>
+              <Input
                 id="adj-wh"
-                className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
-                value={warehouseId}
-                onChange={(e) => setWarehouseId(e.target.value)}
-              >
-                <option value="">-- Chọn kho bãi --</option>
-                {warehouses.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
+                value={warehouses[0]?.name || 'Kho Tổng VLXD'}
+                disabled
+                className="bg-muted text-foreground font-medium"
+              />
             </div>
 
             <div>

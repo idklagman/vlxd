@@ -76,26 +76,12 @@ export function InventoryLedgerPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
             <select
               className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
-              value={selectedWarehouse}
-              onChange={(e) => setSelectedWarehouse(e.target.value)}
-            >
-              <option value="">Tất cả kho hàng</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="w-full h-10 px-3 border border-input rounded-md bg-background text-sm"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
             >
               <option value="">Tất cả loại giao dịch</option>
               <option value="PURCHASE_IN">Nhập hàng</option>
               <option value="SALE_OUT">Xuất bán</option>
-              <option value="TRANSFER_IN">Nhận chuyển kho</option>
-              <option value="TRANSFER_OUT">Xuất chuyển kho</option>
               <option value="MANUAL_ADJUSTMENT">Kiểm kê điều chỉnh</option>
               <option value="REVERSAL">Hoàn tác giao dịch</option>
             </select>
