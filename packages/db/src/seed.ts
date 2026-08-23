@@ -668,28 +668,14 @@ async function seed() {
 
   console.log('✅ Bricks, Nails (Túi 5kg), and Spacers (Hộp) seeded');
 
-  // 8.7 Seed Initial Clean Inventory Balances & Ledger Transactions
+  // 8.7 Initialize Zero Stock Balances without Dummy Transactions
   for (const item of variantInventoryToSeed) {
     await db.insert(inventoryBalances).values({
       warehouseId: primaryWarehouse.id,
       productVariantId: item.id,
-      currentStock: String(item.stock),
+      currentStock: '0',
       reservedStock: '0',
       baseUnitId: item.baseUnitId,
-    });
-
-    await db.insert(inventoryTransactions).values({
-      warehouseId: primaryWarehouse.id,
-      productVariantId: item.id,
-      transactionType: 'PURCHASE_IN',
-      referenceType: 'INITIAL_STOCK',
-      originalQuantity: String(item.stock),
-      originalUnitId: item.baseUnitId,
-      baseQuantity: String(item.stock),
-      baseUnitId: item.baseUnitId,
-      costPerBaseUnit: item.avgCost,
-      totalCost: Math.round(item.stock * item.avgCost),
-      notes: 'Khởi tạo số dư tồn kho ban đầu',
     });
 
     await db.insert(productCosts).values({
@@ -699,7 +685,7 @@ async function seed() {
       baseUnitId: item.baseUnitId,
     });
   }
-  console.log('✅ Initial Clean Inventory seeded for warehouse:', primaryWarehouse.name);
+  console.log('✅ Clean 0-Stock Inventory Balances initialized for warehouse:', primaryWarehouse.name);
 
   // 9. Customers & Projects
   let customerA = await db.query.customers.findFirst({
