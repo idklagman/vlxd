@@ -18,8 +18,10 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Docker
+# Database
 postgres-data/
+pgdata/
+*.exe
 
 # Logs
 *.log
