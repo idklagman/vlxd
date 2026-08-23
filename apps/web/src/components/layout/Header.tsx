@@ -4,21 +4,29 @@ import {
   Truck, Building2, Calendar, UserCheck
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useUiStore } from '../../stores/ui.store';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { formatDate } from '@vlxd/shared';
 
 export function Header() {
   const { user, logout } = useAuth();
+  const { toggleMobileMenu } = useUiStore();
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <header className="h-16 border-b border-border/80 bg-card/95 backdrop-blur flex items-center justify-between px-4 md:px-6 sticky top-0 z-20 shadow-sm">
+    <header className="h-16 border-b border-border/80 bg-card/95 backdrop-blur flex items-center justify-between px-3 sm:px-4 md:px-6 sticky top-0 z-20 shadow-sm">
       {/* Left section */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="w-5 h-5" />
+      <div className="flex items-center gap-2 sm:gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden h-10 w-10 text-foreground hover:bg-muted active:scale-95 touch-manipulation"
+          onClick={toggleMobileMenu}
+          aria-label="Mở Menu"
+        >
+          <Menu className="w-5 h-5 text-primary" />
         </Button>
         
         <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg border border-border/40">

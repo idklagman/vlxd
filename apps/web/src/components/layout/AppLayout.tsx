@@ -18,7 +18,7 @@ export function AppLayout() {
         <div className="print:hidden">
           <Header />
         </div>
-        <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6 print:p-0 print:overflow-visible print:block">
+        <main className="flex-1 overflow-auto p-3.5 sm:p-4 md:p-6 pb-24 md:pb-6 print:p-0 print:overflow-visible print:block">
           <Outlet />
         </main>
         {isMobile && (

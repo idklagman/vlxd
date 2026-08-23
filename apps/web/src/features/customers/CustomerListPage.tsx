@@ -335,7 +335,7 @@ export function CustomerListPage() {
                 placeholder="VD: Nguyễn Văn A, Thợ Tuấn, Đội XD Hưng Phát..."
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="cust-phone">Số điện thoại</Label>
                 <Input

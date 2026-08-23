@@ -387,7 +387,7 @@ export function ExpenseListPage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="exp-veh">Xe tải (nếu chi cho xe)</Label>
                 <select
@@ -428,14 +428,15 @@ export function ExpenseListPage() {
               <Input
                 id="exp-amount"
                 type="number"
+                min="1"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(e.target.value.replace(/-/g, ''))}
                 placeholder="VD: 1500000"
                 className="font-mono text-base font-bold text-rose-600"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="exp-method">Phương thức thanh toán</Label>
                 <select

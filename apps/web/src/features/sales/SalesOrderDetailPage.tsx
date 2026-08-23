@@ -173,10 +173,10 @@ export function SalesOrderDetailPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {order.status === 'DRAFT' && (
             <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white flex-1 sm:flex-initial h-9 touch-manipulation font-semibold"
               onClick={() => confirmMutation.mutate()}
               disabled={confirmMutation.isPending}
             >
@@ -187,7 +187,7 @@ export function SalesOrderDetailPage() {
 
           {(order.status === 'CONFIRMED' || order.status === 'PREPARING') && (
             <Button
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 hover:bg-purple-700 text-white flex-1 sm:flex-initial h-9 touch-manipulation font-semibold"
               onClick={() => dispatchMutation.mutate()}
               disabled={dispatchMutation.isPending}
             >
@@ -198,7 +198,7 @@ export function SalesOrderDetailPage() {
 
           {order.status === 'DELIVERING' && (
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-initial h-9 touch-manipulation font-semibold"
               onClick={() => completeMutation.mutate()}
               disabled={completeMutation.isPending}
             >
@@ -210,7 +210,7 @@ export function SalesOrderDetailPage() {
           {order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && (
             <Button
               variant="outline"
-              className="text-rose-600 hover:bg-rose-50"
+              className="text-rose-600 hover:bg-rose-50 flex-1 sm:flex-initial h-9 touch-manipulation font-medium"
               onClick={() => {
                 if (confirm(`Xác nhận hủy đơn "${order.code}"?`)) {
                   cancelMutation.mutate();
@@ -225,21 +225,22 @@ export function SalesOrderDetailPage() {
 
           <Button
             variant="outline"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 px-3 touch-manipulation"
             onClick={() => {
               if (confirm(`Xác nhận xóa vĩnh viễn đơn "${order.code}"? Hành động này không thể hoàn tác.`)) {
                 deleteOrderMutation.mutate();
               }
             }}
             disabled={deleteOrderMutation.isPending}
+            title="Xóa đơn hàng"
           >
             <Trash2 className="w-4 h-4 mr-1.5" />
-            Xóa đơn
+            <span className="sm:inline">Xóa</span>
           </Button>
 
-          <Button variant="outline" onClick={handlePrint}>
+          <Button variant="outline" onClick={handlePrint} className="h-9 px-3 touch-manipulation font-medium">
             <Printer className="w-4 h-4 mr-1.5" />
-            In phiếu giao hàng
+            In phiếu
           </Button>
         </div>
       </div>
