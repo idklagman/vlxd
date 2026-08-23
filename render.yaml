@@ -1,0 +1,22 @@
+﻿services:
+  - type: web
+    name: vlxd-api
+    env: node
+    plan: free
+    buildCommand: pnpm install && pnpm --filter @vlxd/shared build && pnpm --filter @vlxd/db build && pnpm --filter @vlxd/api build
+    startCommand: pnpm --filter @vlxd/api start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vlxd-db
+          property: connectionString
+
+databases:
+  - name: vlxd-db
+    plan: free
+    databaseName: vlxd
+    user: vlxd_user
