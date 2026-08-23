@@ -125,88 +125,41 @@ export function LoginPage() {
           </div>
         </div>
 
-        {/* Center: Vivid Architectural & Construction Visual Gallery */}
-        <div className="relative z-10 my-auto py-6 space-y-4 max-w-2xl">
-          {/* Main Big Architectural Hero Card */}
-          <div className="relative h-64 xl:h-72 rounded-2xl overflow-hidden border border-slate-700/80 shadow-2xl group">
+        {/* Center: Pure Vivid Architectural & Construction Visual Gallery (NO text overlays) */}
+        <div className="relative z-10 my-auto py-4 space-y-3.5 max-w-2xl">
+          {/* Main Hero Architecture Image */}
+          <div className="relative h-72 xl:h-80 rounded-2xl overflow-hidden border border-slate-700/80 shadow-2xl group">
             <img
               src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1400&auto=format&fit=crop"
-              alt="Thiết kế nhà phố & Biệt thự hiện đại"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-90"
+              alt="Thiết kế kiến trúc hiện đại"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent" />
-            
-            {/* Overlay badge & details */}
-            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/90 text-slate-950 text-[11px] font-extrabold shadow-sm">
-                  <span>Thiết kế & Thi công Nhà phố, Biệt thự</span>
-                </div>
-                <p className="text-sm font-semibold text-white drop-shadow-md">
-                  Vật liệu xây dựng cao cấp • Sắt thép, Xi măng, Gạch đá cát sỏi
-                </p>
-              </div>
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-slate-700 text-xs font-mono text-emerald-400 font-bold">
-                <Check className="w-3.5 h-3.5" />
-                <span>Kho bãi sẵn sàng</span>
-              </div>
-            </div>
           </div>
 
-          {/* 3 Secondary Image Cards Grid */}
-          <div className="grid grid-cols-3 gap-3">
-            {/* Card 1: Steel & Heavy Materials */}
-            <div className="relative h-32 rounded-xl overflow-hidden border border-slate-800 shadow-md group">
+          {/* 3 Secondary Clean Images */}
+          <div className="grid grid-cols-3 gap-3.5">
+            <div className="relative h-36 rounded-xl overflow-hidden border border-slate-800 shadow-lg group">
               <img
-                src="https://images.unsplash.com/photo-1541888946425-d0fbb186156a?q=80&w=600&auto=format&fit=crop"
-                alt="Công trình xây dựng & Kết cấu thép"
+                src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop"
+                alt="Thiết kế biệt thự"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
-              <div className="absolute bottom-2 left-2.5 right-2.5">
-                <span className="text-[11px] font-bold text-white block truncate">
-                  Sắt thép & Kết cấu
-                </span>
-                <span className="text-[10px] text-amber-300 font-medium block truncate">
-                  Hòa Phát • Barem chuẩn
-                </span>
-              </div>
             </div>
 
-            {/* Card 2: Logistics & Trucks */}
-            <div className="relative h-32 rounded-xl overflow-hidden border border-slate-800 shadow-md group">
+            <div className="relative h-36 rounded-xl overflow-hidden border border-slate-800 shadow-lg group">
               <img
-                src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600&auto=format&fit=crop"
-                alt="Đội xe tải giao hàng tận nơi"
+                src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800&auto=format&fit=crop"
+                alt="Nhà phố hiện đại"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
-              <div className="absolute bottom-2 left-2.5 right-2.5">
-                <span className="text-[11px] font-bold text-white block truncate">
-                  Đội xe tải & Xe ben
-                </span>
-                <span className="text-[10px] text-emerald-300 font-medium block truncate">
-                  Giao tận chân công trình
-                </span>
-              </div>
             </div>
 
-            {/* Card 3: Architecture & Blueprints */}
-            <div className="relative h-32 rounded-xl overflow-hidden border border-slate-800 shadow-md group">
+            <div className="relative h-36 rounded-xl overflow-hidden border border-slate-800 shadow-lg group">
               <img
-                src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=600&auto=format&fit=crop"
-                alt="Bản vẽ thiết kế & Dự toán công trình"
+                src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=800&auto=format&fit=crop"
+                alt="Công trình xây dựng"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
-              <div className="absolute bottom-2 left-2.5 right-2.5">
-                <span className="text-[11px] font-bold text-white block truncate">
-                  Bản vẽ & Dự toán
-                </span>
-                <span className="text-[10px] text-blue-300 font-medium block truncate">
-                  Nhà thầu & Thợ xây
-                </span>
-              </div>
             </div>
           </div>
         </div>
