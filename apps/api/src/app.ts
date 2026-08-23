@@ -2,6 +2,10 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import jwt from '@fastify/jwt';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { registerErrorHandler } from './plugins/error-handler.js';
 import { authRoutes } from './routes/auth/auth.routes.js';
 import { settingsRoutes } from './routes/settings/settings.routes.js';
@@ -28,6 +32,9 @@ import { expenseRoutes } from './routes/expenses/expenses.routes.js';
 import { reportRoutes } from './routes/reports/reports.routes.js';
 import { authenticate } from './middleware/authenticate.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export async function buildApp() {
   const app = Fastify({
     logger: true,
@@ -35,7 +42,7 @@ export async function buildApp() {
 
   // Register CORS
   await app.register(cors, {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: true,
     credentials: true,
   });
 
@@ -77,6 +84,27 @@ export async function buildApp() {
   await app.register(deliveryRoutes, { prefix: '/api/deliveries' });
   await app.register(expenseRoutes, { prefix: '/api/expenses' });
   await app.register(reportRoutes, { prefix: '/api/reports' });
+
+  // Serve Frontend SPA in Production
+  const webDistPath = path.resolve(__dirname, '../../web/dist');
+  if (fs.existsSync(webDistPath)) {
+    await app.register(fastifyStatic, {
+      root: webDistPath,
+      prefix: '/',
+    });
+
+    app.setNotFoundHandler((req, reply) => {
+      if (req.raw.url && req.raw.url.startsWith('/api')) {
+        reply.code(404).send({
+          statusCode: 404,
+          error: 'Not Found',
+          message: `Route ${req.method}:${req.url} not found`,
+        });
+      } else {
+        reply.sendFile('index.html');
+      }
+    });
+  }
 
   return app;
 }

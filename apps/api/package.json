@@ -13,19 +13,20 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@vlxd/db": "workspace:*",
-    "@vlxd/shared": "workspace:*",
     "@fastify/cookie": "^11.0.0",
     "@fastify/cors": "^10.0.0",
     "@fastify/jwt": "^9.0.0",
+    "@fastify/static": "^10.1.3",
+    "@vlxd/db": "workspace:*",
+    "@vlxd/shared": "workspace:*",
     "bcrypt": "^5.1.0",
     "dotenv": "^16.4.0",
     "fastify": "^5.2.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
-    "@vlxd/tsconfig": "workspace:*",
     "@types/bcrypt": "^5.0.0",
+    "@vlxd/tsconfig": "workspace:*",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0",
     "vitest": "^3.0.0"
