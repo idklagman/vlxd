@@ -4,6 +4,7 @@ import {
   salesOrderItems,
   inventoryBalances,
   productCosts,
+  productVariants,
   eq,
   and,
   desc,
@@ -45,6 +46,32 @@ export async function createSalesOrder(input: CreateSalesOrderInput, createdById
       item.inputUnitId,
       item.inputQuantity
     );
+
+    // 1. Stock availability validation
+    const variant = await db.query.productVariants.findFirst({
+      where: eq(productVariants.id, item.productVariantId),
+      with: { product: true, baseUnit: true },
+    });
+
+    if (variant && variant.sku !== 'CONG-BE-DAI') {
+      const balance = await db.query.inventoryBalances.findFirst({
+        where: and(
+          eq(inventoryBalances.warehouseId, input.warehouseId),
+          eq(inventoryBalances.productVariantId, item.productVariantId)
+        ),
+      });
+
+      const currentStock = balance ? parseFloat(balance.currentStock) : 0;
+      const reservedStock = balance ? parseFloat(balance.reservedStock) : 0;
+      const availableStock = Math.max(0, currentStock - reservedStock);
+
+      if (baseQuantity > availableStock) {
+        const unitName = variant.baseUnit?.code || 'đơn vị';
+        throw new BusinessRuleError(
+          `Mặt hàng "${variant.name}" không đủ tồn kho để bán (Tồn khả dụng: ${availableStock} ${unitName}, yêu cầu: ${baseQuantity} ${unitName}). Vui lòng nhập hàng vào kho trước khi tạo đơn.`
+        );
+      }
+    }
 
     const lineTotal = Math.max(
       0,

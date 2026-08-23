@@ -24,7 +24,8 @@ import {
   CheckCircle2,
   Sparkles,
   Layers,
-  Coins
+  Coins,
+  AlertCircle
 } from 'lucide-react';
 
 export function SalesOrderCreatePage() {
@@ -190,13 +191,32 @@ export function SalesOrderCreatePage() {
   };
 
   const handleAddProductFromCatalog = async (variant: any) => {
+    const bal = getVariantBalance(variant.id);
+    const available = bal ? parseFloat(bal.availableStock || '0') : 0;
+    if (variant.sku !== 'CONG-BE-DAI' && available <= 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Hết hàng trong kho',
+        description: `Mặt hàng "${variant.name}" hiện có tồn khả dụng là 0. Vui lòng nhập hàng vào kho trước khi bán!`,
+      });
+      return;
+    }
+
     // If empty first item, replace it; otherwise append
     const existingIndex = items.findIndex((it) => it.productVariantId === variant.id);
     if (existingIndex >= 0) {
-      // Increment existing item quantity by 1
+      // Increment existing item quantity by 1 if not exceeding stock
+      const currentQty = parseFloat(items[existingIndex].inputQuantity) || 0;
+      if (variant.sku !== 'CONG-BE-DAI' && currentQty + 1 > available) {
+        toast({
+          variant: 'destructive',
+          title: 'Không đủ tồn kho',
+          description: `Mặt hàng "${variant.name}" chỉ còn ${available} ${bal?.baseUnitCode || ''} trong kho.`,
+        });
+        return;
+      }
       setItems((prev) => {
         const updated = [...prev];
-        const currentQty = parseFloat(updated[existingIndex].inputQuantity) || 0;
         updated[existingIndex].inputQuantity = String(currentQty + 1);
         return updated;
       });
@@ -262,12 +282,23 @@ export function SalesOrderCreatePage() {
   };
 
   const handleItemChange = async (index: number, field: string, value: string) => {
+    let sanitizedValue = value;
+    if (field === 'inputQuantity') {
+      sanitizedValue = value.replace(/-/g, '');
+      const num = parseFloat(sanitizedValue);
+      if (!isNaN(num) && num < 0) sanitizedValue = '0';
+    } else if (field === 'unitPrice' || field === 'discountAmount') {
+      sanitizedValue = value.replace(/-/g, '');
+      const num = parseInt(sanitizedValue, 10);
+      if (!isNaN(num) && num < 0) sanitizedValue = '0';
+    }
+
     setItems((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      updated[index] = { ...updated[index], [field]: sanitizedValue };
 
       if (field === 'productVariantId') {
-        const variant = allVariants.find((v) => v.id === value);
+        const variant = allVariants.find((v) => v.id === sanitizedValue);
         if (variant) {
           updated[index].inputUnitId = variant.steelSpecification?.saleUnitId || variant.baseUnitId;
         }
@@ -275,10 +306,10 @@ export function SalesOrderCreatePage() {
       return updated;
     });
 
-    if (field === 'productVariantId' && customerId && value) {
+    if (field === 'productVariantId' && customerId && sanitizedValue) {
       try {
         const res = await apiClient.get('/sales/pricing/last-sold', {
-          params: { customerId, productVariantId: value },
+          params: { customerId, productVariantId: sanitizedValue },
         });
         if (res.data.data?.unitPrice) {
           setItems((prev) => {
@@ -390,6 +421,18 @@ export function SalesOrderCreatePage() {
         const price = parseInt(it.unitPrice, 10);
         if (isNaN(price) || price < 0) {
           throw new Error(`Đơn giá ở dòng ${i + 1} không được âm.`);
+        }
+
+        const variant = allVariants.find((v) => v.id === it.productVariantId);
+        if (variant && variant.sku !== 'CONG-BE-DAI') {
+          const bal = getVariantBalance(it.productVariantId);
+          const avail = bal ? parseFloat(bal.availableStock || '0') : 0;
+          if (avail <= 0) {
+            throw new Error(`Mặt hàng "${variant.name}" ở dòng ${i + 1} hiện đã hết hàng trong kho (Tồn: 0). Không thể tạo đơn.`);
+          }
+          if (qty > avail) {
+            throw new Error(`Mặt hàng "${variant.name}" ở dòng ${i + 1} không đủ tồn kho (Khả dụng: ${avail} ${bal?.baseUnitCode || ''}, Yêu cầu: ${qty}).`);
+          }
         }
       }
 
@@ -654,26 +697,43 @@ export function SalesOrderCreatePage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
                 {filteredCatalogVariants.map((v) => {
                   const bal = getVariantBalance(v.id);
+                  const available = bal ? parseFloat(bal.availableStock || '0') : 0;
+                  const isService = v.sku === 'CONG-BE-DAI';
+                  const isOutOfStock = !isService && available <= 0;
+
                   return (
                     <button
                       key={v.id}
                       type="button"
                       onClick={() => handleAddProductFromCatalog(v)}
-                      className="p-2.5 rounded-xl border border-border/80 bg-card hover:bg-primary/5 hover:border-primary/40 text-left transition-all flex flex-col justify-between group shadow-2xs"
+                      className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between group shadow-2xs ${
+                        isOutOfStock
+                          ? 'border-rose-200 bg-rose-50/40 opacity-85 hover:border-rose-300'
+                          : 'border-border/80 bg-card hover:bg-primary/5 hover:border-primary/40'
+                      }`}
                     >
                       <div>
-                        <span className="font-bold text-xs text-foreground group-hover:text-primary block truncate">
-                          {v.name}
-                        </span>
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-bold text-xs text-foreground group-hover:text-primary block truncate">
+                            {v.name}
+                          </span>
+                          {isOutOfStock && (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 bg-rose-100 text-rose-700 border-rose-300 font-bold shrink-0">
+                              Hết hàng
+                            </Badge>
+                          )}
+                        </div>
                         <span className="text-[10px] text-muted-foreground block truncate">
                           {v.productName}
                         </span>
                       </div>
                       <div className="mt-2 pt-1 border-t border-border/40 flex items-center justify-between text-[10px]">
-                        <span className="text-blue-700 font-semibold truncate">
-                          {bal?.steelCalculation ? bal.steelCalculation.formattedStock : `${bal?.availableStock || 0}`}
+                        <span className={`font-semibold truncate font-mono ${isOutOfStock ? 'text-rose-600 font-bold' : 'text-blue-700'}`}>
+                          {isService ? 'Dịch vụ' : bal?.steelCalculation ? bal.steelCalculation.formattedStock : `Tồn: ${available} ${bal?.baseUnitCode || ''}`}
                         </span>
-                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                          isOutOfStock ? 'bg-rose-100 text-rose-600' : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground'
+                        }`}>
                           +
                         </span>
                       </div>
@@ -702,10 +762,18 @@ export function SalesOrderCreatePage() {
                 const disc = parseInt(item.discountAmount, 10) || 0;
                 const lineTotal = Math.max(0, qty * price - disc);
 
+                const variant = allVariants.find((v: any) => v.id === item.productVariantId);
+                const isService = variant?.sku === 'CONG-BE-DAI';
+                const availableStock = bal ? parseFloat(bal.availableStock || '0') : 0;
+                const isOutOfStock = !isService && !!item.productVariantId && availableStock <= 0;
+                const isInsufficient = !isService && !!item.productVariantId && availableStock > 0 && qty > availableStock;
+
                 return (
                   <div
                     key={index}
-                    className="bg-card p-3 rounded-xl border border-border/90 space-y-2 hover:border-primary/30 transition-colors shadow-2xs"
+                    className={`p-3 rounded-xl border space-y-2 transition-colors shadow-2xs ${
+                      isOutOfStock || isInsufficient ? 'border-rose-300 bg-rose-50/20' : 'border-border/90 bg-card hover:border-primary/30'
+                    }`}
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
                       <div className="sm:col-span-5">
@@ -728,8 +796,9 @@ export function SalesOrderCreatePage() {
                         <Label className="text-[11px] text-muted-foreground">Số lượng</Label>
                         <Input
                           type="number"
+                          min="0.0001"
                           step="any"
-                          className="h-8 text-xs font-bold text-center mt-0.5"
+                          className={`h-8 text-xs font-bold text-center mt-0.5 ${isOutOfStock || isInsufficient ? 'border-rose-400 text-rose-700 bg-rose-50' : ''}`}
                           value={item.inputQuantity}
                           onChange={(e) => handleItemChange(index, 'inputQuantity', e.target.value)}
                         />
@@ -755,6 +824,7 @@ export function SalesOrderCreatePage() {
                         <Label className="text-[11px] text-muted-foreground">Đơn giá bán</Label>
                         <Input
                           type="number"
+                          min="0"
                           className="h-8 text-xs font-mono font-bold text-primary text-right mt-0.5"
                           value={item.unitPrice}
                           onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
@@ -774,11 +844,29 @@ export function SalesOrderCreatePage() {
                       </div>
                     </div>
 
+                    {/* Stock warning notification banner if out of stock */}
+                    {isOutOfStock && (
+                      <div className="text-[11px] text-rose-700 font-bold bg-rose-100/70 border border-rose-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                        <span>Mặt hàng này hiện đã hết hàng trong kho (Tồn: 0). Không thể tạo đơn bán!</span>
+                      </div>
+                    )}
+                    {isInsufficient && (
+                      <div className="text-[11px] text-amber-800 font-bold bg-amber-100/70 border border-amber-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                        <span>Kho không đủ hàng (Khả dụng: {bal?.steelCalculation ? bal.steelCalculation.formattedStock : `${availableStock} ${bal?.baseUnitCode || ''}`}, Yêu cầu: {qty}). Vui lòng nhập hàng trước!</span>
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap items-center justify-between text-xs pt-1.5 border-t border-border/50 text-muted-foreground">
                       <div>
                         {bal ? (
-                          <span className="text-[10px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-mono">
-                            {bal.steelCalculation
+                          <span className={`text-[10px] px-2 py-0.5 rounded border font-mono ${
+                            availableStock <= 0 ? 'text-rose-700 bg-rose-50 border-rose-200 font-bold' : 'text-blue-700 bg-blue-50 border-blue-100'
+                          }`}>
+                            {isService
+                              ? 'Dịch vụ gia công'
+                              : bal.steelCalculation
                               ? `Tồn kho: ${bal.steelCalculation.formattedStock}`
                               : `Tồn kho: ${bal.availableStock} ${bal.baseUnitCode}`}
                           </span>
@@ -823,9 +911,10 @@ export function SalesOrderCreatePage() {
                   <span className="text-muted-foreground">Chiết khấu đơn:</span>
                   <Input
                     type="number"
+                    min="0"
                     className="w-32 h-8 text-right font-mono text-xs font-semibold"
                     value={discountAmount}
-                    onChange={(e) => setDiscountAmount(e.target.value)}
+                    onChange={(e) => setDiscountAmount(e.target.value.replace(/-/g, ''))}
                   />
                 </div>
 
@@ -833,9 +922,10 @@ export function SalesOrderCreatePage() {
                   <span className="text-muted-foreground">Phí vận chuyển:</span>
                   <Input
                     type="number"
+                    min="0"
                     className="w-32 h-8 text-right font-mono text-xs font-semibold"
                     value={shippingFee}
-                    onChange={(e) => setShippingFee(e.target.value)}
+                    onChange={(e) => setShippingFee(e.target.value.replace(/-/g, ''))}
                   />
                 </div>
 
@@ -851,9 +941,10 @@ export function SalesOrderCreatePage() {
                     <span className="font-bold text-foreground">Khách thanh toán:</span>
                     <Input
                       type="number"
+                      min="0"
                       className="w-36 h-9 text-right font-mono text-sm text-emerald-700 font-extrabold"
                       value={paidAmount}
-                      onChange={(e) => setPaidAmount(e.target.value)}
+                      onChange={(e) => setPaidAmount(e.target.value.replace(/-/g, ''))}
                     />
                   </div>
 
@@ -906,10 +997,11 @@ export function SalesOrderCreatePage() {
                         </span>
                         <Input
                           type="number"
+                          min="0"
                           placeholder="VD: 500000"
                           className="w-32 h-7 text-right font-mono text-xs font-bold"
                           value={tenderAmount}
-                          onChange={(e) => setTenderAmount(e.target.value)}
+                          onChange={(e) => setTenderAmount(e.target.value.replace(/-/g, ''))}
                         />
                       </div>
                       {parseInt(tenderAmount, 10) >= parseInt(paidAmount, 10) && (
@@ -942,6 +1034,21 @@ export function SalesOrderCreatePage() {
                 />
               </div>
 
+              {items.some((it) => {
+                if (!it.productVariantId) return false;
+                const v = allVariants.find((varItem: any) => varItem.id === it.productVariantId);
+                if (v?.sku === 'CONG-BE-DAI') return false;
+                const bal = getVariantBalance(it.productVariantId);
+                const avail = bal ? parseFloat(bal.availableStock || '0') : 0;
+                const qty = parseFloat(it.inputQuantity) || 0;
+                return avail <= 0 || qty > avail || qty <= 0;
+              }) && (
+                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Có mặt hàng không đủ tồn kho hoặc số lượng không hợp lệ. Vui lòng kiểm tra lại.</span>
+                </div>
+              )}
+
               <Button
                 className="w-full h-11 text-sm font-extrabold bg-primary hover:brightness-105 shadow-md transition-all gap-2"
                 onClick={() => createOrderMutation.mutate()}
@@ -950,6 +1057,15 @@ export function SalesOrderCreatePage() {
                   (isNewCustomer && !newCustomerName.trim()) ||
                   !warehouseId ||
                   items.filter((it) => it.productVariantId).length === 0 ||
+                  items.some((it) => {
+                    if (!it.productVariantId) return false;
+                    const v = allVariants.find((varItem: any) => varItem.id === it.productVariantId);
+                    if (v?.sku === 'CONG-BE-DAI') return false;
+                    const bal = getVariantBalance(it.productVariantId);
+                    const avail = bal ? parseFloat(bal.availableStock || '0') : 0;
+                    const qty = parseFloat(it.inputQuantity) || 0;
+                    return avail <= 0 || qty > avail || qty <= 0;
+                  }) ||
                   createOrderMutation.isPending
                 }
               >

@@ -123,11 +123,16 @@ export function InventoryAdjustmentPage() {
   };
 
   const handleItemChange = (index: number, field: string, value: string) => {
+    let sanitizedValue = value;
+    if (field === 'newQuantity') {
+      sanitizedValue = value.replace(/-/g, '');
+    }
+
     setItems((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      updated[index] = { ...updated[index], [field]: sanitizedValue };
       if (field === 'productVariantId') {
-        const curStock = getVariantCurrentStock(value);
+        const curStock = getVariantCurrentStock(sanitizedValue);
         updated[index].newQuantity = String(curStock);
       }
       return updated;
@@ -257,6 +262,7 @@ export function InventoryAdjustmentPage() {
                         <Label className="text-xs text-muted-foreground">Tồn thực tế mới</Label>
                         <Input
                           type="number"
+                          min="0"
                           step="any"
                           className="h-9 text-xs font-mono font-bold text-primary"
                           value={item.newQuantity}

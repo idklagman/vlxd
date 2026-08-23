@@ -154,14 +154,29 @@ export function PurchaseListPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      const validItems = items.filter((it) => it.productVariantId && it.inputUnitId);
+      if (validItems.length === 0) {
+        throw new Error('Vui lòng chọn ít nhất 1 mặt hàng nhập.');
+      }
+      for (let i = 0; i < validItems.length; i++) {
+        const qty = parseFloat(validItems[i].inputQuantity);
+        if (isNaN(qty) || qty <= 0) {
+          throw new Error(`Số lượng mặt hàng dòng ${i + 1} phải lớn hơn 0.`);
+        }
+        const price = parseInt(validItems[i].unitPrice, 10);
+        if (isNaN(price) || price < 0) {
+          throw new Error(`Đơn giá dòng ${i + 1} không được âm.`);
+        }
+      }
+
       return apiClient.post('/purchases', {
         supplierId,
         warehouseId: warehouseId || warehouses[0]?.id,
         purchaseDate,
-        discountAmount: parseInt(discountAmount, 10) || 0,
-        paidAmount: parseInt(paidAmount, 10) || 0,
+        discountAmount: Math.max(0, parseInt(discountAmount, 10) || 0),
+        paidAmount: Math.max(0, parseInt(paidAmount, 10) || 0),
         notes: notes || undefined,
-        items: items.map((it) => ({
+        items: validItems.map((it) => ({
           productVariantId: it.productVariantId,
           inputQuantity: parseFloat(it.inputQuantity),
           inputUnitId: it.inputUnitId,
@@ -264,13 +279,20 @@ export function PurchaseListPage() {
   };
 
   const handleItemChange = (index: number, field: string, value: string) => {
+    let sanitizedValue = value;
+    if (field === 'inputQuantity') {
+      sanitizedValue = value.replace(/-/g, '');
+    } else if (field === 'unitPrice') {
+      sanitizedValue = value.replace(/-/g, '');
+    }
+
     setItems((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      updated[index] = { ...updated[index], [field]: sanitizedValue };
 
       // Auto set inputUnitId to baseUnitId if variant is selected and unit not yet selected
       if (field === 'productVariantId') {
-        const variant = allVariants.find((v) => v.id === value);
+        const variant = allVariants.find((v) => v.id === sanitizedValue);
         if (variant && !updated[index].inputUnitId) {
           updated[index].inputUnitId = variant.baseUnitId;
         }
@@ -531,6 +553,7 @@ export function PurchaseListPage() {
                         <Label className="text-xs text-muted-foreground">Số lượng</Label>
                         <Input
                           type="number"
+                          min="0.0001"
                           step="any"
                           className="h-9 text-xs"
                           value={item.inputQuantity}
@@ -558,6 +581,7 @@ export function PurchaseListPage() {
                         <Label className="text-xs text-muted-foreground">Đơn giá (VND)</Label>
                         <Input
                           type="number"
+                          min="0"
                           className="h-9 text-xs"
                           value={item.unitPrice}
                           onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
@@ -610,9 +634,10 @@ export function PurchaseListPage() {
                   <span>Chiết khấu giảm giá:</span>
                   <Input
                     type="number"
+                    min="0"
                     className="w-32 h-8 text-right font-mono text-xs"
                     value={discountAmount}
-                    onChange={(e) => setDiscountAmount(e.target.value)}
+                    onChange={(e) => setDiscountAmount(e.target.value.replace(/-/g, ''))}
                   />
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t font-bold text-base text-primary">

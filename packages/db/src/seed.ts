@@ -44,7 +44,7 @@ const SALT_ROUNDS = 12;
 async function seed() {
   console.log('🌱 Cleaning old inventory & transaction data and seeding fresh database...');
 
-  // 0. Clean Old Transaction & Inventory Data
+  // 0. Clean Old Transaction & Inventory Data & Sample Customers
   try {
     await db.delete(deliveryItems);
     await db.delete(deliveries);
@@ -64,7 +64,9 @@ async function seed() {
     await db.delete(inventoryTransactions);
     await db.delete(inventoryBalances);
     await db.delete(productCosts);
-    console.log('🧹 Cleaned old transaction & inventory data');
+    await db.delete(projects);
+    await db.delete(customers);
+    console.log('🧹 Cleaned old transactions, orders, debts, customers & inventory data');
   } catch (err) {
     console.warn('Note during clean:', err);
   }
@@ -87,12 +89,12 @@ async function seed() {
 
   // 2. System Settings
   const defaultSettings = [
-    { key: 'store.name', value: 'Cửa hàng VLXD', group: 'store', description: 'Tên cửa hàng' },
-    { key: 'store.phone', value: '0987654321', group: 'store', description: 'Số điện thoại cửa hàng' },
-    { key: 'store.address', value: 'Hương Sơn, Mỹ Đức, Hà Nội', group: 'store', description: 'Địa chỉ cửa hàng' },
+    { key: 'store.name', value: 'Cửa hàng VLXD Ton Thủy', group: 'store', description: 'Tên cửa hàng' },
+    { key: 'store.phone', value: '0987593703', group: 'store', description: 'Số điện thoại cửa hàng' },
+    { key: 'store.address', value: 'Yên Vỹ, Tam Giang, Bắc Ninh', group: 'store', description: 'Địa chỉ cửa hàng' },
     { key: 'bank.name', value: 'VietinBank', group: 'bank', description: 'Tên ngân hàng' },
     { key: 'bank.account_number', value: '12283456', group: 'bank', description: 'Số tài khoản ngân hàng' },
-    { key: 'bank.account_name', value: 'NGUYEN VAN CHU', group: 'bank', description: 'Tên chủ tài khoản' },
+    { key: 'bank.account_name', value: 'NGUYEN DUC LONG', group: 'bank', description: 'Tên chủ tài khoản' },
   ];
 
   for (const setting of defaultSettings) {
@@ -101,9 +103,11 @@ async function seed() {
     });
     if (!existing) {
       await db.insert(systemSettings).values(setting);
+    } else {
+      await db.update(systemSettings).set(setting).where(eq(systemSettings.key, setting.key));
     }
   }
-  console.log('✅ System settings seeded');
+  console.log('✅ System settings seeded & synchronized');
 
   // 3. Units (including HOP for Spacers and TUI for 5kg Nails)
   const defaultUnits = [
@@ -687,55 +691,8 @@ async function seed() {
   }
   console.log('✅ Clean 0-Stock Inventory Balances initialized for warehouse:', primaryWarehouse.name);
 
-  // 9. Customers & Projects
-  let customerA = await db.query.customers.findFirst({
-    where: eq(customers.name, 'Nguyễn Văn A'),
-  });
-  if (!customerA) {
-    const [c] = await db.insert(customers).values({
-      name: 'Nguyễn Văn A',
-      phone: '0912345678',
-      address: 'Xã Hương Sơn, Huyện Mỹ Đức, Hà Nội',
-      customerType: 'RETAIL',
-      notes: 'Khách xây nhà mới ở Yên Vỹ',
-    }).returning();
-    customerA = c;
-
-    // Project for Customer A
-    await db.insert(projects).values({
-      customerId: customerA.id,
-      name: 'Nhà 3 tầng Yên Vỹ',
-      address: 'Thôn Yên Vỹ, Hương Sơn, Mỹ Đức, Hà Nội',
-      contactName: 'Anh A',
-      contactPhone: '0912345678',
-      startDate: '2026-08-01',
-      status: 'ACTIVE',
-      notes: 'Công trình nhà ở gia đình 3 tầng mái Thái',
-    });
-  }
-
-  const existingBuilder = await db.query.customers.findFirst({
-    where: eq(customers.name, 'Thợ Tuấn'),
-  });
-  if (!existingBuilder) {
-    const [c] = await db.insert(customers).values({
-      name: 'Thợ Tuấn',
-      phone: '0988112233',
-      address: 'Thị trấn Đại Nghĩa, Mỹ Đức, Hà Nội',
-      customerType: 'BUILDER',
-      notes: 'Cai thầu chuyên nhận nhà dân trong huyện',
-    }).returning();
-
-    await db.insert(projects).values({
-      customerId: c.id,
-      name: 'Nhà cấp 4 mái Nhật Đại Nghĩa',
-      address: 'Khu 2, TT Đại Nghĩa',
-      contactName: 'Thợ Tuấn',
-      contactPhone: '0988112233',
-      status: 'ACTIVE',
-    });
-  }
-  console.log('✅ Customers and Projects seeded');
+  // 9. Customers & Projects (Clean start for user data entry)
+  console.log('✅ Clean Customers & Projects initialized (ready for user data entry)');
 
   // 10. Suppliers
   const defaultSuppliers = [

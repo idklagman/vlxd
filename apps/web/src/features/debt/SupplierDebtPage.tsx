@@ -310,8 +310,9 @@ export function SupplierDebtPage() {
               <Input
                 id="qs-amount"
                 type="number"
+                min="1"
                 value={spendAmount}
-                onChange={(e) => setSpendAmount(e.target.value)}
+                onChange={(e) => setSpendAmount(e.target.value.replace(/-/g, ''))}
                 placeholder="VD: 10000000"
                 className="font-mono text-base font-bold text-amber-900"
               />

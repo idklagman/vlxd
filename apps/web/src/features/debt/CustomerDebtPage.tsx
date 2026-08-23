@@ -364,8 +364,9 @@ export function CustomerDebtPage() {
               <Input
                 id="qc-amount"
                 type="number"
+                min="1"
                 value={collectAmount}
-                onChange={(e) => setCollectAmount(e.target.value)}
+                onChange={(e) => setCollectAmount(e.target.value.replace(/-/g, ''))}
                 placeholder="VD: 5000000"
                 className="font-mono text-base font-bold text-emerald-700"
               />
